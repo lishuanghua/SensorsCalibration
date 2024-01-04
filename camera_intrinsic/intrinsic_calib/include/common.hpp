@@ -5,9 +5,11 @@
  */
 #pragma once
 
-struct Point2i {
+struct Point2i
+{
   Point2i() {}
-  Point2i(int x, int y) {
+  Point2i(int x, int y)
+  {
     this->x = x;
     this->y = y;
   }
@@ -15,9 +17,11 @@ struct Point2i {
   int y;
 };
 
-struct Point2f {
+struct Point2f
+{
   Point2f() {}
-  Point2f(float x, float y) {
+  Point2f(float x, float y)
+  {
     this->x = x;
     this->y = y;
   }
@@ -25,9 +29,11 @@ struct Point2f {
   float y;
 };
 
-struct Vector4f {
+struct Vector4f
+{
   Vector4f() {}
-  Vector4f(float x, float y, float z, float w) {
+  Vector4f(float x, float y, float z, float w)
+  {
     this->x = x;
     this->y = y;
     this->z = z;
@@ -39,9 +45,11 @@ struct Vector4f {
   float w;
 };
 
-struct Vector4i {
+struct Vector4i
+{
   Vector4i() {}
-  Vector4i(int x, int y, int z, int w) {
+  Vector4i(int x, int y, int z, int w)
+  {
     this->x = x;
     this->y = y;
     this->z = z;
