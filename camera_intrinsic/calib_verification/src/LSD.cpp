@@ -32,6 +32,7 @@ void LineSegmentDetector::detect(
     if (image.empty() && !image.type() == CV_8UC1)
     {
         std::cerr << "[ERROR] WRONG INPUT IMAGE PARAM" << std::endl;
+
         return;
     }
 
@@ -41,20 +42,30 @@ void LineSegmentDetector::detect(
     w_needed = true;
     p_needed = true;
     if (doRefine < LSD_REFINE_ADV)
+    {
         n_needed = false;
+    }
     else
+    {
         // n_needed = _nfa.needed();
         n_needed = false;
+    }
 
     _line_point_map.resize(image.rows, std::vector<int>(image.cols));
     flsd(_lines, _line_points, _line_point_map, w, p, n);
 
     if (w_needed)
+    {
         _width = w;
+    }
     if (p_needed)
+    {
         _prec = p;
+    }
     if (n_needed)
+    {
         _nfa = n;
+    }
 
     // Clear used structures
     ordered_points.clear();
@@ -77,13 +88,11 @@ void LineSegmentDetector::flsd(std::vector<Vector4f> &lines,
         cv::Mat gaussian_img;
         const double sigma = (SCALE < 1) ? (SIGMA_SCALE / SCALE) : (SIGMA_SCALE);
         const double sprec = 3;
-        const unsigned int h =
-            (unsigned int)(ceil(sigma * sqrt(2 * sprec * log(10.0))));
+        const unsigned int h = (unsigned int)(ceil(sigma * sqrt(2 * sprec * log(10.0))));
         cv::Size ksize(1 + 2 * h, 1 + 2 * h); // kernel size
         cv::GaussianBlur(image, gaussian_img, ksize, sigma);
         // Scale image to needed size
-        cv::resize(gaussian_img, scaled_image, cv::Size(), SCALE, SCALE,
-                   cv::INTER_LINEAR);
+        cv::resize(gaussian_img, scaled_image, cv::Size(), SCALE, SCALE, cv::INTER_LINEAR);
         // cv::resize(gaussian_img, scaled_image, cv::Size(), SCALE, SCALE,
         // cv::INTER_CUBIC);
         ll_angle(rho, N_BINS);
@@ -94,11 +103,8 @@ void LineSegmentDetector::flsd(std::vector<Vector4f> &lines,
         ll_angle(rho, N_BINS);
     }
 
-    LOG_NT = 5 * (log10(double(img_width)) + log10(double(img_height))) / 2 +
-             log10(11.0);
-    const size_t min_reg_size =
-        size_t(-LOG_NT / log10(p)) *
-        3; // minimal number of points in region that can give a meaningful event
+    LOG_NT = 5 * (log10(double(img_width)) + log10(double(img_height))) / 2 + log10(11.0);
+    const size_t min_reg_size = size_t(-LOG_NT / log10(p)) * 3; // minimal number of points in region that can give a meaningful event
     // const size_t min_reg_size = 1500;
     // // Initialize region only when needed
     // Mat region = Mat::zeros(scaled_image.size(), CV_8UC1);
@@ -106,8 +112,7 @@ void LineSegmentDetector::flsd(std::vector<Vector4f> &lines,
     std::vector<RegionPoint> reg;
 
     // Search for line segments
-    for (size_t i = 0, points_size = ordered_points.size(); i < points_size;
-         ++i)
+    for (size_t i = 0, points_size = ordered_points.size(); i < points_size; ++i)
     {
         const Point2i &point = ordered_points[i].p;
         // std::cout << point.x << "  " << point.y;
@@ -169,8 +174,7 @@ void LineSegmentDetector::flsd(std::vector<Vector4f> &lines,
             // Store the relevant data
             // std::cout << "\nFind Line " << line_points.size() << "("<< reg.size()
             // << ")!\n";
-            lines.push_back(
-                Vector4f(float(rec.x1), float(rec.y1), float(rec.x2), float(rec.y2)));
+            lines.push_back(Vector4f(float(rec.x1), float(rec.y1), float(rec.x2), float(rec.y2)));
             line_points.push_back(std::vector<Point2i>());
             int line_index = line_points.size();
             // get_edge_point(reg, reg_angle, line_points[line_points.size() - 1]);
@@ -185,11 +189,17 @@ void LineSegmentDetector::flsd(std::vector<Vector4f> &lines,
                 }
             }
             if (w_needed)
+            {
                 widths.push_back(rec.width);
+            }
             if (p_needed)
+            {
                 precisions.push_back(rec.p);
+            }
             if (n_needed && doRefine >= LSD_REFINE_ADV)
+            {
                 nfas.push_back(log_nfa);
+            }
         }
     }
 }
@@ -210,9 +220,7 @@ void LineSegmentDetector::get_edge_point(std::vector<RegionPoint> &reg_points,
     for (int i = 0; i < reg_points.size() - gap; i += gap)
     {
         rect rec;
-        region2rect(std::vector<RegionPoint>(reg_points.begin() + i,
-                                             reg_points.begin() + i + gap),
-                    reg_angle, prec, p, rec);
+        region2rect(std::vector<RegionPoint>(reg_points.begin() + i, reg_points.begin() + i + gap), reg_angle, prec, p, rec);
         rec.x1 += 0.5;
         rec.y1 += 0.5;
         rec.x2 += 0.5;
@@ -229,8 +237,7 @@ void LineSegmentDetector::get_edge_point(std::vector<RegionPoint> &reg_points,
     }
 }
 
-void LineSegmentDetector::ll_angle(const double &threshold,
-                                   const unsigned int &n_bins)
+void LineSegmentDetector::ll_angle(const double &threshold, const unsigned int &n_bins)
 {
     // Initialize data
     angles = cv::Mat_<double>(scaled_image.size());
@@ -278,8 +285,7 @@ void LineSegmentDetector::ll_angle(const double &threshold,
     }
 
     // Compute histogram of gradient values
-    double bin_coef = (max_grad > 0) ? double(n_bins - 1) / max_grad
-                                     : 0; // If all image is smooth, max_grad <= 0
+    double bin_coef = (max_grad > 0) ? double(n_bins - 1) / max_grad : 0; // If all image is smooth, max_grad <= 0
     for (int y = 0; y < img_height - 1; ++y)
     {
         const double *modgrad_row = modgrad.ptr<double>(y);
@@ -297,9 +303,7 @@ void LineSegmentDetector::ll_angle(const double &threshold,
     std::sort(ordered_points.begin(), ordered_points.end(), compare_norm);
 }
 
-void LineSegmentDetector::region_grow(const Point2i &s,
-                                      std::vector<RegionPoint> &reg,
-                                      double &reg_angle, const double &prec)
+void LineSegmentDetector::region_grow(const Point2i &s, std::vector<RegionPoint> &reg, double &reg_angle, const double &prec)
 {
     reg.clear();
 
@@ -321,10 +325,8 @@ void LineSegmentDetector::region_grow(const Point2i &s,
     for (size_t i = 0; i < reg.size(); i++)
     {
         const RegionPoint &rpoint = reg[i];
-        int xx_min = std::max(rpoint.x - 1, 0),
-            xx_max = std::min(rpoint.x + 1, img_width - 1);
-        int yy_min = std::max(rpoint.y - 1, 0),
-            yy_max = std::min(rpoint.y + 1, img_height - 1);
+        int xx_min = std::max(rpoint.x - 1, 0), xx_max = std::min(rpoint.x + 1, img_width - 1);
+        int yy_min = std::max(rpoint.y - 1, 0), yy_max = std::min(rpoint.y + 1, img_height - 1);
         for (int yy = yy_min; yy <= yy_max; ++yy)
         {
             uchar *used_row = used.ptr<uchar>(yy);
@@ -375,6 +377,7 @@ void LineSegmentDetector::region2rect(const std::vector<RegionPoint> &reg,
     if (sum <= 0)
     {
         std::cerr << "[ERROR] WEIGHTED SUM ERROR IN region2rect" << std::endl;
+
         return;
     }
 
@@ -397,13 +400,22 @@ void LineSegmentDetector::region2rect(const std::vector<RegionPoint> &reg,
         double w = -regdx * dy + regdy * dx;
 
         if (l > l_max)
+        {
             l_max = l;
+        }
         else if (l < l_min)
+        {
             l_min = l;
+        }
+
         if (w > w_max)
+        {
             w_max = w;
+        }
         else if (w < w_min)
+        {
             w_min = w;
+        }
     }
 
     // Store values
@@ -422,7 +434,9 @@ void LineSegmentDetector::region2rect(const std::vector<RegionPoint> &reg,
 
     // Min width of 1 pixel
     if (rec.width < 1.0)
+    {
         rec.width = 1.0;
+    }
 }
 
 double LineSegmentDetector::get_theta(const std::vector<RegionPoint> &reg,
@@ -451,18 +465,17 @@ double LineSegmentDetector::get_theta(const std::vector<RegionPoint> &reg,
     if (double_equal(Ixx, 0) && double_equal(Iyy, 0) && double_equal(Ixy, 0))
     {
         std::cerr << "[ERROR] PARAM ERROR IN get_theta" << std::endl;
+
         return 0;
     };
 
     // Compute smallest eigenvalue
-    double lambda =
-        0.5 * (Ixx + Iyy - sqrt((Ixx - Iyy) * (Ixx - Iyy) + 4.0 * Ixy * Ixy));
+    double lambda = 0.5 * (Ixx + Iyy - sqrt((Ixx - Iyy) * (Ixx - Iyy) + 4.0 * Ixy * Ixy));
 
     // Compute angle
-    double theta =
-        (fabs(Ixx) > fabs(Iyy))
-            ? double(cv::fastAtan2(float(lambda - Ixx), float(Ixy)))
-            : double(cv::fastAtan2(float(Ixy), float(lambda - Iyy))); // in degs
+    double theta = (fabs(Ixx) > fabs(Iyy))
+                       ? double(cv::fastAtan2(float(lambda - Ixx), float(Ixy)))
+                       : double(cv::fastAtan2(float(Ixy), float(lambda - Iyy))); // in degs
     theta *= DEG_TO_RADS;
 
     // Correct angle by 180 deg if necessary
@@ -478,8 +491,7 @@ bool LineSegmentDetector::refine(std::vector<RegionPoint> &reg,
                                  double reg_angle, const double prec, double p,
                                  rect &rec, const double &density_th)
 {
-    double density =
-        double(reg.size()) / (dist(rec.x1, rec.y1, rec.x2, rec.y2) * rec.width);
+    double density = double(reg.size()) / (dist(rec.x1, rec.y1, rec.x2, rec.y2) * rec.width);
 
     if (density >= density_th)
     {
@@ -508,12 +520,12 @@ bool LineSegmentDetector::refine(std::vector<RegionPoint> &reg,
     if (n <= 0)
     {
         std::cerr << "[ERROR] PARAM ERROR IN refine" << std::endl;
+
         return false;
     }
     double mean_angle = sum / double(n);
     // 2 * standard deviation
-    double tau = 2.0 * sqrt((s_sum - 2.0 * mean_angle * sum) / double(n) +
-                            mean_angle * mean_angle);
+    double tau = 2.0 * sqrt((s_sum - 2.0 * mean_angle * sum) / double(n) + mean_angle * mean_angle);
 
     // Try new region
     region_grow(Point2i(reg[0].x, reg[0].y), reg, reg_angle, tau);
@@ -524,13 +536,11 @@ bool LineSegmentDetector::refine(std::vector<RegionPoint> &reg,
     }
 
     region2rect(reg, reg_angle, prec, p, rec);
-    density =
-        double(reg.size()) / (dist(rec.x1, rec.y1, rec.x2, rec.y2) * rec.width);
+    density = double(reg.size()) / (dist(rec.x1, rec.y1, rec.x2, rec.y2) * rec.width);
 
     if (density < density_th)
     {
-        return reduce_region_radius(reg, reg_angle, prec, p, rec, density,
-                                    density_th);
+        return reduce_region_radius(reg, reg_angle, prec, p, rec, density, density_th);
     }
     else
     {
@@ -576,8 +586,7 @@ bool LineSegmentDetector::reduce_region_radius(std::vector<RegionPoint> &reg,
         region2rect(reg, reg_angle, prec, p, rec);
 
         // Re-compute region points density
-        density =
-            double(reg.size()) / (dist(rec.x1, rec.y1, rec.x2, rec.y2) * rec.width);
+        density = double(reg.size()) / (dist(rec.x1, rec.y1, rec.x2, rec.y2) * rec.width);
     }
 
     return true;
@@ -591,7 +600,9 @@ double LineSegmentDetector::rect_improve(rect &rec) const
     double log_nfa = rect_nfa(rec);
 
     if (log_nfa > LOG_EPS)
+    {
         return log_nfa; // Good rectangle
+    }
 
     // Try to improve
     // Finer precision
@@ -608,7 +619,9 @@ double LineSegmentDetector::rect_improve(rect &rec) const
         }
     }
     if (log_nfa > LOG_EPS)
+    {
         return log_nfa;
+    }
 
     // Try to reduce width
     r = rect(rec);
@@ -626,7 +639,9 @@ double LineSegmentDetector::rect_improve(rect &rec) const
         }
     }
     if (log_nfa > LOG_EPS)
+    {
         return log_nfa;
+    }
 
     // Try to reduce one side of rectangle
     r = rect(rec);
@@ -648,7 +663,9 @@ double LineSegmentDetector::rect_improve(rect &rec) const
         }
     }
     if (log_nfa > LOG_EPS)
+    {
         return log_nfa;
+    }
 
     // Try to reduce other side of rectangle
     r = rect(rec);
@@ -670,7 +687,9 @@ double LineSegmentDetector::rect_improve(rect &rec) const
         }
     }
     if (log_nfa > LOG_EPS)
+    {
         return log_nfa;
+    }
 
     // Try finer precision
     r = rect(rec);
@@ -751,6 +770,7 @@ double LineSegmentDetector::rect_nfa(const rect &rec) const
     if (leftmost == NULL)
     {
         std::cerr << "[ERROR] INVALID PARAM IN rect_nfa" << std::endl;
+
         return 0;
     }
     leftmost->taken = true;
@@ -774,6 +794,7 @@ double LineSegmentDetector::rect_nfa(const rect &rec) const
     if (rightmost == NULL)
     {
         std::cerr << "[ERROR] INVALID PARAM IN rect_nfa" << std::endl;
+
         return 0;
     }
     rightmost->taken = true;
@@ -797,27 +818,16 @@ double LineSegmentDetector::rect_nfa(const rect &rec) const
     if (tailp == NULL)
     {
         std::cerr << "[ERROR] INVALID PARAM IN rect_nfa" << std::endl;
+
         return 0;
     }
     tailp->taken = true;
 
-    double flstep =
-        (min_y->p.y != leftmost->p.y)
-            ? (min_y->p.x - leftmost->p.x) / (min_y->p.y - leftmost->p.y)
-            : 0; // first left step
-    double slstep =
-        (leftmost->p.y != tailp->p.x)
-            ? (leftmost->p.x - tailp->p.x) / (leftmost->p.y - tailp->p.x)
-            : 0; // second left step
+    double flstep = (min_y->p.y != leftmost->p.y) ? (min_y->p.x - leftmost->p.x) / (min_y->p.y - leftmost->p.y) : 0; // first left step
+    double slstep = (leftmost->p.y != tailp->p.x) ? (leftmost->p.x - tailp->p.x) / (leftmost->p.y - tailp->p.x) : 0; // second left step
 
-    double frstep =
-        (min_y->p.y != rightmost->p.y)
-            ? (min_y->p.x - rightmost->p.x) / (min_y->p.y - rightmost->p.y)
-            : 0; // first right step
-    double srstep =
-        (rightmost->p.y != tailp->p.x)
-            ? (rightmost->p.x - tailp->p.x) / (rightmost->p.y - tailp->p.x)
-            : 0; // second right step
+    double frstep = (min_y->p.y != rightmost->p.y) ? (min_y->p.x - rightmost->p.x) / (min_y->p.y - rightmost->p.y) : 0; // first right step
+    double srstep = (rightmost->p.y != tailp->p.x) ? (rightmost->p.x - tailp->p.x) / (rightmost->p.y - tailp->p.x) : 0; // second right step
 
     double lstep = flstep, rstep = frstep;
 
@@ -829,12 +839,16 @@ double LineSegmentDetector::rect_nfa(const rect &rec) const
     for (int y = min_iter; y <= max_iter; ++y)
     {
         if (y < 0 || y >= img_height)
+        {
             continue;
+        }
 
         for (int x = int(left_x); x <= int(right_x); ++x)
         {
             if (x < 0 || x >= img_width)
+            {
                 continue;
+            }
 
             ++total_pts;
             if (isAligned(x, y, rec.theta, rec.prec))
@@ -859,8 +873,7 @@ double LineSegmentDetector::rect_nfa(const rect &rec) const
     return nfa(total_pts, alg_pts, rec.p);
 }
 
-double LineSegmentDetector::nfa(const int &n, const int &k,
-                                const double &p) const
+double LineSegmentDetector::nfa(const int &n, const int &k, const double &p) const
 {
     // Trivial cases
     if (n == 0 || k == 0)
@@ -882,9 +895,13 @@ double LineSegmentDetector::nfa(const int &n, const int &k,
     if (double_equal(term, 0))
     {
         if (k > n * p)
+        {
             return -log1term / M_LN10 - LOG_NT;
+        }
         else
+        {
             return -LOG_NT;
+        }
     }
 
     // Compute more terms if needed
@@ -898,18 +915,18 @@ double LineSegmentDetector::nfa(const int &n, const int &k,
         bin_tail += term;
         if (bin_term < 1)
         {
-            double err =
-                term *
-                ((1 - pow(mult_term, double(n - i + 1))) / (1 - mult_term) - 1);
+            double err = term * ((1 - pow(mult_term, double(n - i + 1))) / (1 - mult_term) - 1);
             if (err < tolerance * std::fabs(-log10(bin_tail) - LOG_NT) * bin_tail)
+            {
                 break;
+            }
         }
     }
+
     return -log10(bin_tail) - LOG_NT;
 }
 
-inline bool LineSegmentDetector::isAligned(int x, int y, const double &theta,
-                                           const double &prec) const
+inline bool LineSegmentDetector::isAligned(int x, int y, const double &theta, const double &prec) const
 {
     if (x < 0 || y < 0 || x >= angles.cols || y >= angles.rows)
     {
@@ -931,14 +948,15 @@ inline bool LineSegmentDetector::isAligned(int x, int y, const double &theta,
     {
         n_theta -= M_2__PI;
         if (n_theta < 0)
+        {
             n_theta = -n_theta;
+        }
     }
 
     return n_theta <= prec;
 }
 
-void LineSegmentDetector::drawSegments(
-    cv::Mat &_image, const std::vector<std::vector<Point2i>> line_points)
+void LineSegmentDetector::drawSegments(cv::Mat &_image, const std::vector<std::vector<Point2i>> line_points)
 {
     if (_image.empty())
     {
@@ -992,8 +1010,7 @@ void LineSegmentDetector::drawSegments(
     }
 }
 
-void LineSegmentDetector::drawSegments(cv::Mat &_image,
-                                       const std::vector<Vector4f> &lines)
+void LineSegmentDetector::drawSegments(cv::Mat &_image, const std::vector<Vector4f> &lines)
 {
     if (_image.empty())
     {

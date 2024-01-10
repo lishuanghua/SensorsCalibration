@@ -11,8 +11,7 @@ CalibrationHarp::CalibrationHarp() { return; }
 
 // void maskImage(cv::Mat &img, std::vector)
 
-bool CalibrationHarp::measure(const std::string &image_path, double &_d,
-                              double &_d_max)
+bool CalibrationHarp::measure(const std::string &image_path, double &_d, double &_d_max)
 {
     // get image
     cv::Mat image = cv::imread(image_path, 0);
@@ -27,8 +26,7 @@ bool CalibrationHarp::measure(const std::string &image_path, double &_d,
     std::vector<double> width;
     std::vector<double> prec;
     std::vector<double> nfas;
-    line_detector.detect(image, lines, line_points, line_point_map, width, prec,
-                         nfas);
+    line_detector.detect(image, lines, line_points, line_point_map, width, prec, nfas);
     // canny edge detect
     cv::Mat blur_image;
     cv::Mat edge_image;
@@ -70,8 +68,7 @@ bool CalibrationHarp::measure(const std::string &image_path, double &_d,
     interpolate_edge_points(lines, edge_line_points, interpolated_edge_points);
     // gaussion blur and subsample points
     std::vector<std::vector<Point2i>> subsampled_edge_points;
-    gaussion_subsample_points(interpolated_edge_points, subsampled_edge_points,
-                              20);
+    gaussion_subsample_points(interpolated_edge_points, subsampled_edge_points, 20);
 
     origin_image_.copyTo(drawn_img);
     line_detector.drawSegments(drawn_img, subsampled_edge_points);
@@ -108,13 +105,11 @@ bool CalibrationHarp::interpolate_edge_points(
                                  static_cast<double>(lines[0].y - lines[0].w));
         if (rough_angle < 1)
         {
-            std::sort(sorted_edge_points[i].begin(), sorted_edge_points[i].end(),
-                      sortLineByY_function);
+            std::sort(sorted_edge_points[i].begin(), sorted_edge_points[i].end(), sortLineByY_function);
         }
         else
         {
-            std::sort(sorted_edge_points[i].begin(), sorted_edge_points[i].end(),
-                      sortLineByX_function);
+            std::sort(sorted_edge_points[i].begin(), sorted_edge_points[i].end(), sortLineByX_function);
         }
     }
 
@@ -133,10 +128,8 @@ bool CalibrationHarp::interpolate_edge_points(
         line_point_distance[i].push_back(0);
         for (int idx = 0; idx < sorted_edge_points[i].size() - 1; idx++)
         {
-            double dx =
-                sorted_edge_points[i][idx].x - sorted_edge_points[i][idx + 1].x;
-            double dy =
-                sorted_edge_points[i][idx].y - sorted_edge_points[i][idx + 1].y;
+            double dx = sorted_edge_points[i][idx].x - sorted_edge_points[i][idx + 1].x;
+            double dy = sorted_edge_points[i][idx].y - sorted_edge_points[i][idx + 1].y;
             double dist = sqrt(dx * dx + dy * dy);
             line_point_distance[i].push_back(line_point_distance[i][idx] + dist);
         }
@@ -145,7 +138,9 @@ bool CalibrationHarp::interpolate_edge_points(
     for (int i = 0; i < line_num; i++)
     {
         if (sorted_edge_points[i].size() == 0)
+        {
             continue;
+        }
 
         double L = line_point_distance[i][line_point_distance[i].size() - 1];
         double N = sorted_edge_points[i].size();
@@ -165,7 +160,9 @@ bool CalibrationHarp::interpolate_edge_points(
                 p_pos++;
             }
             if (p_pos >= N)
+            {
                 break;
+            }
             double a = L_pos - line_point_distance[i][p_pos - 1];
             double b = line_point_distance[i][p_pos] - L_pos;
             double x1 = sorted_edge_points[i][p_pos - 1].x;
@@ -183,9 +180,8 @@ bool CalibrationHarp::interpolate_edge_points(
     return true;
 }
 
-bool CalibrationHarp::gaussion_subsample_points(
-    const std::vector<std::vector<Point2i>> &interpolated_edge_points,
-    std::vector<std::vector<Point2i>> &subsampled_edge_points, const int t)
+bool CalibrationHarp::gaussion_subsample_points(const std::vector<std::vector<Point2i>> &interpolated_edge_points,
+                                                std::vector<std::vector<Point2i>> &subsampled_edge_points, const int t)
 {
     int line_num = interpolated_edge_points.size();
     subsampled_edge_points.resize(line_num);
@@ -214,7 +210,9 @@ bool CalibrationHarp::gaussion_subsample_points(
     {
         int point_size = interpolated_edge_points[line_idx].size();
         if (point_size == 0)
+        {
             continue;
+        }
 
         for (int p = t; p < point_size - t; p += t)
         {
@@ -234,13 +232,14 @@ bool CalibrationHarp::gaussion_subsample_points(
                 }
             }
             if (gauss_sum == 0)
+            {
                 continue;
+            }
             int selected_x = static_cast<int>(gauss_x_sum / gauss_sum + 0.5);
             int selected_y = static_cast<int>(gauss_y_sum / gauss_sum + 0.5);
             // std::cout << selected_x << "\t" << selected_y << std::endl;
 
-            subsampled_edge_points[line_idx].push_back(
-                Point2i(selected_x, selected_y));
+            subsampled_edge_points[line_idx].push_back(Point2i(selected_x, selected_y));
         }
     }
 
@@ -262,7 +261,9 @@ bool CalibrationHarp::calculate_error(
     for (int i = 0; i < subsampled_edge_point.size(); i++)
     {
         if (subsampled_edge_point[i].size() == 0)
+        {
             continue;
+        }
         // std::cout << std::endl;
         int point_num = subsampled_edge_point[i].size();
         real_line_num++;
@@ -282,9 +283,13 @@ bool CalibrationHarp::calculate_error(
             double Si_square = Si * Si;
             S += Si_square;
             if (Si > Si_max)
+            {
                 Si_max = Si;
+            }
             if (Si < Si_min)
+            {
                 Si_min = Si;
+            }
 
             // std::cout << "x=" << x << "   " << "y=" << y
             //           << "  Si=" << Si << std::endl;
@@ -294,20 +299,20 @@ bool CalibrationHarp::calculate_error(
         S_max_total += (Si_max - Si_min) * (Si_max - Si_min);
         double max_current = Si_max - Si_min;
         if (max_current > S_d_max)
+        {
             S_d_max = max_current;
+        }
     }
     d = sqrt(S / static_cast<double>(total_point_num));
     d_max = sqrt(S_max_total / static_cast<double>(real_line_num));
     d_c_median = S_d_max;
 
-    std::cout << "Detected " << real_line_num << " lines. " << total_point_num
-              << " edge points.\n";
+    std::cout << "Detected " << real_line_num << " lines. " << total_point_num << " edge points.\n";
     return true;
 }
 
 bool CalibrationHarp::get_line_param(const std::vector<Point2i> &edge_points,
-                                     double &alpha, double &beta,
-                                     double &gama)
+                                     double &alpha, double &beta, double &gama)
 {
     double Ax = 0, Ay = 0;
     int point_num = edge_points.size();
