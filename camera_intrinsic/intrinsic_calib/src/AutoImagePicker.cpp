@@ -46,6 +46,8 @@ bool AutoImagePicker::addImage(const std::vector<cv::Point2f> &image_corners)
   BoardSquare current_square(p1, p2, p3, p4);
   if (!checkValidity(current_square))
   {
+    std::cout << "checkValidity false" << std::endl;
+
     return false;
   }
 
@@ -59,6 +61,8 @@ bool AutoImagePicker::addImage(const std::vector<cv::Point2f> &image_corners)
   {
     if (!checkPoseAngleThresh(current_square))
     {
+      std::cout << "checkPoseAngleThresh false" << std::endl;
+
       return false;
     }
     candidate_board_.push_back(current_square);
@@ -151,6 +155,8 @@ bool AutoImagePicker::checkPoseAngleThresh(const BoardSquare &board)
           fabs(board.angle_left_bottom - candidate.angle_left_bottom) < CHESSBOARD_MIN_ANGLE_CHANGE_THRESH &&
           fabs(board.angle_right_bottom - candidate.angle_right_bottom) < CHESSBOARD_MIN_ANGLE_CHANGE_THRESH)
       {
+        std::cout << "fabs false" << std::endl;
+
         return false;
       }
     }

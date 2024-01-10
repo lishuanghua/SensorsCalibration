@@ -59,6 +59,8 @@ bool IntrinsicCalibration::Calibrate(const std::string &img_dir_path,
 
     grid_size_ = grid_size;
     corner_size_ = cv::Size(corner_width, corner_height);
+    corner_size_.width = corner_width;
+    corner_size_.height = corner_height;
     std::vector<cv::Point3f> object_corners;
     // generate 3D corner points
     for (int i = 0; i < corner_size_.height; i++)
@@ -88,10 +90,10 @@ bool IntrinsicCalibration::Calibrate(const std::string &img_dir_path,
             // whether select this image for calibration
             if (image_selector.addImage(image_corners))
             {
-                std::cout << "Select image " << file_names[i] << std::endl;
+                std::cout << "Select image : " << file_names[i] << std::endl;
                 selected_file_names.push_back(file_names[i]);
                 cv::imwrite(selected_image_path_ + file_names[i], cv::imread(img_dir_path_ + file_names[i]));
-                cv::TermCriteria criteria(cv::TermCriteria::EPS | cv::TermCriteria::EPS, grid_size_, 0.001);
+                cv::TermCriteria criteria(cv::TermCriteria::COUNT | cv::TermCriteria::EPS, grid_size_, 0.001);
                 cv::cornerSubPix(input_image, image_corners, cv::Size(5, 5), cv::Size(-1, -1), criteria);
 
                 addPoints(image_corners, object_corners);
@@ -100,13 +102,21 @@ bool IntrinsicCalibration::Calibrate(const std::string &img_dir_path,
                 cv::drawChessboardCorners(input_image, corner_size_, image_corners, whether_found);
                 cv::imshow(file_names[i], input_image);
                 // cv::waitKey(50);
-                cv::waitKey(50);
+                cv::waitKey(500);
+            }
+            else
+            {
+                std::cout << "The unselected image is : " << file_names[i].c_str() << std::endl;
             }
 
             if (image_selector.status())
             {
                 break;
             }
+        }
+        else
+        {
+            std::cout << "The bad picture is : " << file_names[i].c_str() << std::endl;
         }
     }
     cv::destroyAllWindows();
@@ -127,7 +137,7 @@ bool IntrinsicCalibration::Calibrate(const std::string &img_dir_path,
     std::cout << camera_intrinsic_.at<double>(0, 0) << "\t" << camera_intrinsic_.at<double>(0, 1) << "\t" << camera_intrinsic_.at<double>(0, 2) << std::endl;
     std::cout << camera_intrinsic_.at<double>(1, 0) << "\t" << camera_intrinsic_.at<double>(1, 1) << "\t" << camera_intrinsic_.at<double>(1, 2) << std::endl;
     std::cout << camera_intrinsic_.at<double>(2, 0) << "\t" << camera_intrinsic_.at<double>(2, 1) << "\t" << camera_intrinsic_.at<double>(2, 2) << std::endl;
-    std::cout << "\ndist: \n";
+    std::cout << "\ndistortion: \n";
     for (int i = 0; i < camera_dist_.rows; i++)
     {
         for (int j = 0; j < camera_dist_.cols; j++)
