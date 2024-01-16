@@ -12,9 +12,11 @@
 
 int main(int argc, char **argv)
 {
+    std::cout << "Enter in int main(int argc, char **argv) function" << std::endl;
+
     if (argc != 3)
     {
-        std::cout << "Usage: ./main camera_dir csv file"
+        std::cout << "Usage: ./main camera_dir csv_file"
                      "\nexample:\n\t"
                      "./bin/lidar2camera data/intrinsic/ data/circle.csv"
                   << std::endl;
@@ -24,7 +26,7 @@ int main(int argc, char **argv)
 
     std::string image_dir = argv[1];
     std::string csv_file = argv[2];
-    std::cout << csv_file << std::endl;
+    std::cout << "csv_file : " << csv_file << std::endl;
     std::ifstream fin(csv_file);
     std::string line;
     bool is_first = true;
@@ -32,6 +34,7 @@ int main(int argc, char **argv)
 
     while (getline(fin, line))
     {
+        // std::cout << "line : " << line << std::endl;
         if (is_first)
         {
             is_first = false;
@@ -44,13 +47,33 @@ int main(int argc, char **argv)
 
         while (getline(sin, field, ','))
         {
+            // std::cout << "field : " << field << std::endl;
             fields.push_back(field);
         }
+
+        /*
+        for (auto it : fields)
+        {
+            std::cout << it << " ";
+        }
+        std::cout << std::endl;
+        */
 
         lidar_3d_pts.push_back(fields);
     }
 
-    std::cout << image_dir << std::endl;
+    /*
+    for (auto x : lidar_3d_pts)
+    {
+        for (auto y : x)
+        {
+            std::cout << y << " ";
+        }
+        std::cout << std::endl;
+    }
+    */
+
+    std::cout << "image_dir : " << image_dir << std::endl;
     std::vector<cv::String> images;
     cv::glob(image_dir, images);
     std::vector<cv::Mat> vec_mat;
@@ -58,8 +81,8 @@ int main(int argc, char **argv)
 
     for (const auto &path : images)
     {
-        std::cout << path << std::endl;
-        cv::Mat img = cv::imread(path, cv::IMREAD_GRAYSCALE);
+        // std::cout << "path : " << path << std::endl;
+        cv::Mat img = cv::imread(path, cv::IMREAD_GRAYSCALE); // 读取图片时直接转换为灰度图
         vec_mat.push_back(img);
         images_name.push_back(path);
     }
@@ -71,6 +94,8 @@ int main(int argc, char **argv)
     std::vector<cv::Mat> rvecsMat;
     m.set_input(images_name, vec_mat, cv::Size{17, 7}, lidar_3d_pts);
     m.get_result(camera_matrix, k, cv::Size{1920, 1200}, rvecsMat, tvecsMat);
+
+    std::cout << "Leave out int main(int argc, char **argv) function" << std::endl;
 
     return 0;
 }

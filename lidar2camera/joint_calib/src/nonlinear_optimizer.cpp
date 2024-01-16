@@ -8,13 +8,13 @@ void NonlinearOptimizer::refine_H(const std::vector<cv::Point2f> &img_pts_,
     Eigen::MatrixXd x1(2, board_pts_.size());
     Eigen::MatrixXd x2(2, img_pts_.size());
 
-    for (int i = 0; i < board_pts_.size(); ++i)
+    for (size_t i = 0; i < board_pts_.size(); ++i)
     {
         x1(0, i) = board_pts_[i].x;
         x1(1, i) = board_pts_[i].y;
     }
 
-    for (int i = 0; i < img_pts_.size(); ++i)
+    for (size_t i = 0; i < img_pts_.size(); ++i)
     {
         x2(0, i) = img_pts_[i].x;
         x2(1, i) = img_pts_[i].y;
@@ -59,6 +59,8 @@ void NonlinearOptimizer::refine_all_camera_params(
     const std::vector<std::vector<cv::Point2f>> &bords_pts_,
     Params &refined_params_)
 {
+    std::cout << "Enter in void NonlinearOptimizer::refine_all_camera_params() function" << std::endl;
+
     ceres::Problem problem;
     Eigen::Matrix3d camera_matrix = params_.camera_matrix;
     Eigen::VectorXd k = params_.k;
@@ -70,27 +72,41 @@ void NonlinearOptimizer::refine_all_camera_params(
 
     // package all rt
     std::vector<Eigen::VectorXd> packet_rt;
-    for (int n = 0; n < params_.vec_rt.size(); ++n)
+    for (size_t n = 0; n < params_.vec_rt.size(); ++n)
     {
         Eigen::AngleAxisd r(vec_rt[n].block<3, 3>(0, 0));
         Eigen::VectorXd rot_vec(r.axis() * r.angle());
         Eigen::VectorXd rt(6);
         rt << rot_vec(0), rot_vec(1), rot_vec(2), vec_rt[n](0, 3), vec_rt[n](1, 3), vec_rt[n](2, 3);
         packet_rt.push_back(rt);
+
+        /*
+        std::cout << "r : \n";
+        std::cout << r.matrix() << std::endl;
+
+        std::cout << "r.axis() : \n"
+                  << r.axis() << std::endl;
+        std::cout << "r.angle() : \n"
+                  << r.angle() << std::endl;
+        std::cout << "rot_vec : \n"
+                  << rot_vec << std::endl;
+        std::cout << "rt : \n"
+                  << rt << std::endl;
+        */
     }
 
-    for (int n = 0; n < params_.vec_rt.size(); ++n)
+    for (size_t n = 0; n < params_.vec_rt.size(); ++n)
     {
         Eigen::MatrixXd x1(2, bords_pts_[n].size());
         Eigen::MatrixXd x2(2, imgs_pts_[n].size());
 
-        for (int i = 0; i < bords_pts_[n].size(); ++i)
+        for (size_t i = 0; i < bords_pts_[n].size(); ++i)
         {
             x1(0, i) = bords_pts_[n][i].x;
             x1(1, i) = bords_pts_[n][i].y;
         }
 
-        for (int i = 0; i < imgs_pts_[n].size(); ++i)
+        for (size_t i = 0; i < imgs_pts_[n].size(); ++i)
         {
             x2(0, i) = imgs_pts_[n][i].x;
             x2(1, i) = imgs_pts_[n][i].y;
@@ -114,11 +130,19 @@ void NonlinearOptimizer::refine_all_camera_params(
 
     // Solve!
     ceres::Solver::Summary summary;
-    ceres::Solve(options, &problem, &summary);
 
-    DLOG(INFO) << "Final Brief Report:\n"
-               << summary.BriefReport() << std::endl;
+    std::cout << "Before ceres::Solve(options, &problem, &summary);" << std::endl;
+    ceres::Solve(options, &problem, &summary);
+    std::cout << "After ceres::Solve(options, &problem, &summary);" << std::endl;
+
+    // DLOG(INFO) << "Final Brief Report:\n"
+    std::cout << "Final Brief Report:\n"
+              << summary.BriefReport() << std::endl;
+    std::cout << "Final Full Report:\n"
+              << summary.FullReport() << std::endl;
     this->formate_data(v_camera_matrix, k, packet_rt, refined_params_);
+
+    std::cout << "Leave out void NonlinearOptimizer::refine_all_camera_params() function" << std::endl;
 }
 
 void NonlinearOptimizer::formate_data(
@@ -127,6 +151,8 @@ void NonlinearOptimizer::formate_data(
     const std::vector<Eigen::VectorXd> &v_rt_,
     Params &params_)
 {
+    std::cout << "Enter in void NonlinearOptimizer::formate_data() function" << std::endl;
+
     params_.camera_matrix << v_camera_matrix_(0), v_camera_matrix_(1), v_camera_matrix_(2),
         0., v_camera_matrix_(3), v_camera_matrix_(4), 0, 0, 1.;
     params_.k = v_dist_;
@@ -140,6 +166,8 @@ void NonlinearOptimizer::formate_data(
         rt1.block<3, 1>(0, 3) = Eigen::Vector3d(rt(3), rt(4), rt(5));
         params_.vec_rt.push_back(rt1);
     }
+
+    std::cout << "Leave out void NonlinearOptimizer::formate_data() function" << std::endl;
 }
 
 void NonlinearOptimizer::refine_lidar2camera_params(
@@ -149,6 +177,8 @@ void NonlinearOptimizer::refine_lidar2camera_params(
     const std::vector<LidarPointPair> lidar_point_pairs,
     LidarParams &refined_params_)
 {
+    std::cout << "Enter in void NonlinearOptimizer::refine_lidar2camera_params() function" << std::endl;
+
     ceres::Problem problem;
     Eigen::Matrix3d camera_matrix = params_.camera_matrix;
     Eigen::VectorXd k = params_.k;
@@ -160,7 +190,7 @@ void NonlinearOptimizer::refine_lidar2camera_params(
 
     // package all rt
     std::vector<Eigen::VectorXd> packet_rt;
-    for (int n = 0; n < params_.vec_rt.size(); ++n)
+    for (size_t n = 0; n < params_.vec_rt.size(); ++n)
     {
         Eigen::AngleAxisd r(vec_rt[n].block<3, 3>(0, 0));
         Eigen::VectorXd rot_vec(r.axis() * r.angle());
@@ -168,17 +198,17 @@ void NonlinearOptimizer::refine_lidar2camera_params(
         rt << rot_vec(0), rot_vec(1), rot_vec(2), vec_rt[n](0, 3), vec_rt[n](1, 3), vec_rt[n](2, 3);
         packet_rt.push_back(rt);
     }
-    for (int n = 0; n < params_.vec_rt.size(); ++n)
+    for (size_t n = 0; n < params_.vec_rt.size(); ++n)
     {
         Eigen::MatrixXd x1(2, bords_pts_[n].size());
         Eigen::MatrixXd x2(2, imgs_pts_[n].size());
 
-        for (int i = 0; i < bords_pts_[n].size(); ++i)
+        for (size_t i = 0; i < bords_pts_[n].size(); ++i)
         {
             x1(0, i) = bords_pts_[n][i].x;
             x1(1, i) = bords_pts_[n][i].y;
         }
-        for (int i = 0; i < imgs_pts_[n].size(); ++i)
+        for (size_t i = 0; i < imgs_pts_[n].size(); ++i)
         {
             x2(0, i) = imgs_pts_[n][i].x;
             x2(1, i) = imgs_pts_[n][i].y;
@@ -226,11 +256,21 @@ void NonlinearOptimizer::refine_lidar2camera_params(
 
     // Solve!
     ceres::Solver::Summary summary;
+
+    std::cout << "Before ceres::Solve(options, &problem, &summary);" << std::endl;
     ceres::Solve(options, &problem, &summary);
+    std::cout << "After ceres::Solve(options, &problem, &summary);" << std::endl;
 
     // DLOG(INFO) << "Final Brief Report:\n" << summary.BriefReport() <<
     // std::endl;
+    std::cout << "Final Brief Report:\n"
+              << summary.BriefReport() << std::endl;
+    std::cout << "Final Full Report:\n"
+              << summary.FullReport() << std::endl;
+
     this->formate_data(v_camera_matrix, k, packet_rt, rt, refined_params_);
+
+    std::cout << "Leave out void NonlinearOptimizer::refine_lidar2camera_params() function" << std::endl;
 }
 
 void NonlinearOptimizer::formate_data(
@@ -240,6 +280,8 @@ void NonlinearOptimizer::formate_data(
     const Eigen::VectorXd &RT,
     LidarParams &params_)
 {
+    std::cout << "Enter in void NonlinearOptimizer::formate_data() function" << std::endl;
+
     params_.camera_matrix << v_camera_matrix_(0), v_camera_matrix_(1), v_camera_matrix_(2),
         0., v_camera_matrix_(3), v_camera_matrix_(4), 0, 0, 1.;
     params_.k = v_dist_;
@@ -261,4 +303,6 @@ void NonlinearOptimizer::formate_data(
     rt1.block<3, 1>(0, 3) = Eigen::Vector3d(RT(3), RT(4), RT(5));
     std::cout << rv << std::endl;
     params_.extrinsic = rt1;
+
+    std::cout << "Leave out void NonlinearOptimizer::formate_data() function" << std::endl;
 }

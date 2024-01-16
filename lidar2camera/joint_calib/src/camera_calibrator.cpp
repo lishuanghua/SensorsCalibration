@@ -7,10 +7,13 @@
 #include "camera_calibrator.hpp"
 #include <iomanip>
 
-void CameraCalibrator::set_input(const std::vector<std::string> images_name,
-                                 const std::vector<cv::Mat> &vec_mat_, const cv::Size &chessboard_size_,
-                                 const std::vector<std::vector<std::string>> &lidar_3d_pts)
+void CameraCalibrator::set_input(
+    const std::vector<std::string> images_name,
+    const std::vector<cv::Mat> &vec_mat_,
+    const cv::Size &chessboard_size_,
+    const std::vector<std::vector<std::string>> &lidar_3d_pts)
 {
+    std::cout << "Enter in CameraCalibrator::set_input() function" << std::endl;
     // lidar
     std::vector<std::vector<cv::Point3f>> pts;
     for (auto src : lidar_3d_pts)
@@ -24,8 +27,28 @@ void CameraCalibrator::set_input(const std::vector<std::string> images_name,
         pt.push_back(right_top);
         pt.push_back(left_bottom);
         pt.push_back(right_bottom);
+
+        /*
+        for (auto e : pt)
+        {
+            std::cout << e.x << " " << e.y << " " << e.z << " ";
+        }
+        std::cout << std::endl;
+        */
+
         pts.push_back(pt);
     }
+
+    /*
+    for (auto a : pts)
+    {
+        for (auto b : a)
+        {
+            std::cout << b.x << " " << b.y << " " << b.z << " ";
+        }
+        std::cout << std::endl;
+    }
+    */
 
     std::cout << "start" << std::endl;
     _boards_pts.clear();
@@ -35,8 +58,9 @@ void CameraCalibrator::set_input(const std::vector<std::string> images_name,
     {
         CHECK(1 == img.channels()) << "images must be gray";
         std::vector<cv::Point2f> corner_pts;
-        int found = cv::findChessboardCorners(img, chessboard_size_, corner_pts,
-                                              cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_FAST_CHECK | cv::CALIB_CB_NORMALIZE_IMAGE);
+        int found = cv::findChessboardCorners(
+            img, chessboard_size_, corner_pts,
+            cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_FAST_CHECK | cv::CALIB_CB_NORMALIZE_IMAGE);
         if (!found)
         {
             continue;
@@ -45,32 +69,53 @@ void CameraCalibrator::set_input(const std::vector<std::string> images_name,
         cv::Mat img_copy = img.clone();
         available_imgs.push_back(img_copy);
         lidar_3d_pts_.push_back(pts[i]);
-        std::cout << images_name[i] << std::endl;
+        // std::cout << "images_name[" << i << "] : " << images_name[i] << std::endl;
         i++;
         cv::TermCriteria criteria(2, 30, 0.001);
         cv::cornerSubPix(img, corner_pts, chessboard_size_, cv::Size(-1, -1), criteria);
         _imgs_pts.push_back(corner_pts);
         this->make_board_points(chessboard_size_);
     }
+
+    std::cout << "Leave out CameraCalibrator::set_input() function" << std::endl;
 }
 
-void CameraCalibrator::get_result(cv::Mat &camera_matrix, cv::Mat &k,
-                                  const cv::Size &image_size,
-                                  std::vector<cv::Mat> &rvecsMat,
-                                  std::vector<cv::Mat> &tvecsMat)
+void CameraCalibrator::get_result(
+    cv::Mat &camera_matrix,
+    cv::Mat &k,
+    const cv::Size &image_size,
+    std::vector<cv::Mat> &rvecsMat,
+    std::vector<cv::Mat> &tvecsMat)
 {
+    std::cout << "Enter in void CameraCalibrator::get_result() function" << std::endl;
+
     double re_error = cv::calibrateCamera(_boards_pts_3d, _imgs_pts, image_size, camera_matrix,
                                           k, rvecsMat, tvecsMat, cv::CALIB_FIX_PRINCIPAL_POINT);
-    std::cout << "reprojection is " << re_error << std::endl;
+    std::cout << "reprojection is : " << re_error << std::endl;
 
     Eigen::Matrix3d camera_intrinsic;
     camera_intrinsic << camera_matrix.at<double>(0, 0), camera_matrix.at<double>(0, 1), camera_matrix.at<double>(0, 2),
         camera_matrix.at<double>(1, 0), camera_matrix.at<double>(1, 1), camera_matrix.at<double>(1, 2),
         camera_matrix.at<double>(2, 0), camera_matrix.at<double>(2, 1), camera_matrix.at<double>(2, 2);
-    Eigen::VectorXd distort(2);
-    distort << k.at<double>(0, 0), k.at<double>(0, 1);
+    // Eigen::VectorXd distort(2);
+    Eigen::VectorXd distort(5);
+    // distort << k.at<double>(0, 0), k.at<double>(0, 1);
+    distort << k.at<double>(0, 0), k.at<double>(0, 1), k.at<double>(0, 2), k.at<double>(0, 3), k.at<double>(0, 4);
 
+    /*
+    for (int i = 0; i < k.rows; i++)
+    {
+        for (int j = 0; j < k.cols; j++)
+        {
+            std::cout << k.at<double>(i, j) << ", ";
+        }
+    }
+    std::cout << std::endl;
+    */
+
+    std::cout << "camera_intrinsic : " << std::endl;
     std::cout << camera_intrinsic << std::endl;
+    std::cout << "distortion : " << std::endl;
     std::cout << distort << std::endl;
 
     std::vector<Eigen::MatrixXd> vec_extrinsics;
@@ -79,7 +124,10 @@ void CameraCalibrator::get_result(cv::Mat &camera_matrix, cv::Mat &k,
         cv::Mat rvec = rvecsMat[i];
         cv::Mat tvec = tvecsMat[i];
         cv::Mat rot;
-        cv::Rodrigues(rvec, rot);
+        cv::Rodrigues(rvec, rot); // rvec是三行一列，rot是三行三列；
+        // std::cout << rvec << std::endl;
+        // std::cout << rot << std::endl;
+
         std::vector<cv::Point2f> imgpoints_cir;
         cv::projectPoints(_boards_pts_cir[i], rvecsMat[i], tvecsMat[i], camera_matrix, k, imgpoints_cir);
         size_t y_min = imgpoints_cir[0].y;
@@ -206,7 +254,8 @@ void CameraCalibrator::get_result(cv::Mat &camera_matrix, cv::Mat &k,
     initial_extrinsic << -0.0000667338, -0.9999999780, 0.0001990654, -0.0010031200,
         -0.0000409491, 0.0001990681, 0.9999999793, 0.5912607639,
         -0.9999999969, 0.0000667257, -0.0000409624, 2.5079706347;
-    std::cout << initial_extrinsic << std::endl;
+    std::cout << "initial_extrinsic : \n"
+              << initial_extrinsic << std::endl;
 
     this->refine_lidar2camera(camera_intrinsic, distort, vec_extrinsics, initial_extrinsic, lidar_point_pairs);
 
@@ -258,34 +307,46 @@ void CameraCalibrator::get_result(cv::Mat &camera_matrix, cv::Mat &k,
     }
 
     std::cout << "lidar reprojection error: " << lidar_reprojection_error / number << std::endl;
+
+    std::cout << "Leave out void CameraCalibrator::get_result() function" << std::endl;
 }
 
 void CameraCalibrator::DrawCross(cv::Mat &img, cv::Point point)
 {
+    // std::cout << "Enter in void CameraCalibrator::DrawCross() function" << std::endl;
+
     double cx = point.x;
     double cy = point.y;
     double len = 10;
     cv::line(img, cv::Point(cx - len, cy), cv::Point(cx + len, cy), (0, 255, 255), 3);
     cv::line(img, cv::Point(cx, cy - len), cv::Point(cx, cy + len), (0, 255, 255), 3);
+
+    // std::cout << "Leave out void CameraCalibrator::DrawCross() function" << std::endl;
 }
 
-void CameraCalibrator::lidar_projection(const Eigen::Matrix3d &camera_intrinsic,
-                                        const Eigen::Matrix<double, 3, 4> &extrinsic,
-                                        const cv::Point3f &pt,
-                                        cv::Point2f &img_pt)
+void CameraCalibrator::lidar_projection(
+    const Eigen::Matrix3d &camera_intrinsic,
+    const Eigen::Matrix<double, 3, 4> &extrinsic,
+    const cv::Point3f &pt,
+    cv::Point2f &img_pt)
 {
+    // std::cout << "Enter in void CameraCalibrator::lidar_projection() function" << std::endl;
+
     Eigen::Matrix<double, 4, 1> lidar_point;
     lidar_point << pt.x, pt.y, pt.z, 1.0;
     // Eigen::Matrix<float, 3, 1> pro_pt;
-    auto pro_pt = camera_intrinsic * extrinsic * lidar_point;
+    auto pro_pt = camera_intrinsic * extrinsic * lidar_point; // 重点研究并手动计算
     img_pt.x = pro_pt(0) / pro_pt(2);
     img_pt.y = pro_pt(1) / pro_pt(2);
+
+    // std::cout << "Leave out void CameraCalibrator::lidar_projection() function" << std::endl;
 }
 
-void CameraCalibrator::point_undistort(const std::vector<std::vector<cv::Point2f>> &board_imgs_pts,
-                                       std::vector<std::vector<cv::Point2f>> &undistort_pts,
-                                       const Eigen::Matrix3d camera_intrinsic,
-                                       const Eigen::VectorXd distort)
+void CameraCalibrator::point_undistort(
+    const std::vector<std::vector<cv::Point2f>> &board_imgs_pts,
+    std::vector<std::vector<cv::Point2f>> &undistort_pts,
+    const Eigen::Matrix3d camera_intrinsic,
+    const Eigen::VectorXd distort)
 {
     cv::Mat K, D;
     float d[4], k[9];
@@ -325,10 +386,11 @@ void CameraCalibrator::point_undistort(const std::vector<std::vector<cv::Point2f
     }
 }
 
-void CameraCalibrator::image_undistort(const cv::Mat &img,
-                                       cv::Mat &undistort_img,
-                                       const Eigen::Matrix3d camera_intrinsic,
-                                       const Eigen::VectorXd distort)
+void CameraCalibrator::image_undistort(
+    const cv::Mat &img,
+    cv::Mat &undistort_img,
+    const Eigen::Matrix3d camera_intrinsic,
+    const Eigen::VectorXd distort)
 {
     cv::Mat K, D;
     float d[4], k[9];
@@ -358,6 +420,8 @@ void CameraCalibrator::image_undistort(const cv::Mat &img,
 
 void CameraCalibrator::make_board_points(const cv::Size &chessboard_size_)
 {
+    // std::cout << "Enter in void CameraCalibrator::make_board_points() function" << std::endl;
+
     std::vector<cv::Point2f> vec_points;
     std::vector<cv::Point3f> vec_points_3d;
     for (int r = 0; r < chessboard_size_.height; ++r)
@@ -378,29 +442,40 @@ void CameraCalibrator::make_board_points(const cv::Size &chessboard_size_)
     vec_points_cir.emplace_back(14.18f, 9.12f, 0.0f);  // sim
 
     _boards_pts_cir.push_back(vec_points_cir); // scl
+
+    // std::cout << "Leave out void CameraCalibrator::make_board_points() function" << std::endl;
 }
 
-void CameraCalibrator::refine_all(Eigen::Matrix3d &camera_matrix_,
-                                  Eigen::VectorXd &k_,
-                                  std::vector<Eigen::MatrixXd> &vec_extrinsics_)
+void CameraCalibrator::refine_all(
+    Eigen::Matrix3d &camera_matrix_,
+    Eigen::VectorXd &k_,
+    std::vector<Eigen::MatrixXd> &vec_extrinsics_)
 {
+    std::cout << "Enter in void CameraCalibrator::refine_all() function" << std::endl;
+
     Params params, params_refined;
     params.camera_matrix = camera_matrix_;
     params.k = k_;
     params.vec_rt = vec_extrinsics_;
-    LOGI("this is here");
+    // LOGI("this is here : ");
+    std::cout << "this is here : " << std::endl;
     optimier.refine_all_camera_params(params, _imgs_pts, _boards_pts, params_refined);
     camera_matrix_ = params_refined.camera_matrix;
     k_ = params_refined.k;
     vec_extrinsics_ = params_refined.vec_rt;
+
+    std::cout << "Leave out void CameraCalibrator::refine_all() function" << std::endl;
 }
 
-void CameraCalibrator::refine_lidar2camera(Eigen::Matrix3d &camera_matrix_,
-                                           Eigen::VectorXd &k_,
-                                           std::vector<Eigen::MatrixXd> &vec_extrinsics_,
-                                           Eigen::Matrix<double, 3, 4> &initial_extrinsic,
-                                           std::vector<LidarPointPair> &lidar_point_pairs)
+void CameraCalibrator::refine_lidar2camera(
+    Eigen::Matrix3d &camera_matrix_,
+    Eigen::VectorXd &k_,
+    std::vector<Eigen::MatrixXd> &vec_extrinsics_,
+    Eigen::Matrix<double, 3, 4> &initial_extrinsic,
+    std::vector<LidarPointPair> &lidar_point_pairs)
 {
+    std::cout << "Enter in void CameraCalibrator::refine_lidar2camera() function" << std::endl;
+
     LidarParams params, params_refined;
     params.camera_matrix = camera_matrix_;
     params.k = k_;
@@ -414,11 +489,14 @@ void CameraCalibrator::refine_lidar2camera(Eigen::Matrix3d &camera_matrix_,
     k_ = params_refined.k;
     vec_extrinsics_ = params_refined.vec_rt;
     initial_extrinsic = params_refined.extrinsic;
+
+    std::cout << "Leave out void CameraCalibrator::refine_lidar2camera() function" << std::endl;
 }
 
-void CameraCalibrator::get_distortion(const Eigen::Matrix3d &camera_matrix_,
-                                      const std::vector<Eigen::MatrixXd> &vec_extrinsics_,
-                                      Eigen::VectorXd &k_)
+void CameraCalibrator::get_distortion(
+    const Eigen::Matrix3d &camera_matrix_,
+    const std::vector<Eigen::MatrixXd> &vec_extrinsics_,
+    Eigen::VectorXd &k_)
 {
     Eigen::MatrixXd D;
     Eigen::VectorXd d;
@@ -458,9 +536,10 @@ void CameraCalibrator::get_distortion(const Eigen::Matrix3d &camera_matrix_,
     k_ = temp * d;
 }
 
-void CameraCalibrator::get_extrinsics(const std::vector<Eigen::Matrix3d> &vec_h_,
-                                      const Eigen::Matrix3d &camera_matrix_,
-                                      std::vector<Eigen::MatrixXd> &vec_extrinsics_)
+void CameraCalibrator::get_extrinsics(
+    const std::vector<Eigen::Matrix3d> &vec_h_,
+    const Eigen::Matrix3d &camera_matrix_,
+    std::vector<Eigen::MatrixXd> &vec_extrinsics_)
 {
     vec_extrinsics_.clear();
     Eigen::Matrix3d inv_camera_matrix = camera_matrix_.inverse();
@@ -484,10 +563,11 @@ void CameraCalibrator::get_extrinsics(const std::vector<Eigen::Matrix3d> &vec_h_
     }
 }
 
-void CameraCalibrator::create_v(const Eigen::Matrix3d &h_,
-                                const int p,
-                                const int q,
-                                Eigen::RowVectorXd &row_v_)
+void CameraCalibrator::create_v(
+    const Eigen::Matrix3d &h_,
+    const int p,
+    const int q,
+    Eigen::RowVectorXd &row_v_)
 {
     row_v_ << h_(0, p) * h_(0, q), h_(0, p) * h_(1, q) + h_(1, p) * h_(0, q),
         h_(1, p) * h_(1, q), h_(2, p) * h_(0, q) + h_(0, p) * h_(2, q),
@@ -537,9 +617,10 @@ void CameraCalibrator::get_homography(std::vector<Eigen::Matrix3d> &vec_h_)
     }
 }
 
-void CameraCalibrator::estimate_H(const std::vector<cv::Point2f> &img_pts_,
-                                  const std::vector<cv::Point2f> &board_pts_,
-                                  Eigen::Matrix3d &matrix_H_)
+void CameraCalibrator::estimate_H(
+    const std::vector<cv::Point2f> &img_pts_,
+    const std::vector<cv::Point2f> &board_pts_,
+    Eigen::Matrix3d &matrix_H_)
 {
     Eigen::Matrix3d matrix_normalize_img_pts;
     Eigen::Matrix3d matrix_normalize_board_pts;
