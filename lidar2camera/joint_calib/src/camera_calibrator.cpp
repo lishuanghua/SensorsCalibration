@@ -580,7 +580,7 @@ void CameraCalibrator::get_camera_instrinsics(const std::vector<Eigen::Matrix3d>
     Eigen::MatrixXd V(2 * N, 6);
     V.setZero();
 
-    for (int n = 0; n < N; ++n)
+    for (size_t n = 0; n < N; ++n)
     {
         Eigen::RowVectorXd v01(6), v00(6), v11(6);
         create_v(vec_h_[n], 0, 1, v01);
@@ -630,7 +630,7 @@ void CameraCalibrator::estimate_H(
     Eigen::MatrixXd M(2 * N, 9);
     M.setZero();
 
-    for (int i = 0; i < N; ++i)
+    for (size_t i = 0; i < N; ++i)
     {
         Eigen::Vector3d norm_img_p = matrix_normalize_img_pts * Eigen::Vector3d(img_pts_[i].x, img_pts_[i].y, 1);
         Eigen::Vector3d norm_board_p = matrix_normalize_board_pts * Eigen::Vector3d(board_pts_[i].x, board_pts_[i].y, 1);
