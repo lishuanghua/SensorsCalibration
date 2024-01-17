@@ -515,12 +515,10 @@ void CameraCalibrator::get_distortion(
             Eigen::Vector2d v_r(coor_norm(0), coor_norm(1));
             double r = v_r.norm();
 
-            Eigen::RowVector2d vu((uv_estim(0) - uc) * r * r,
-                                  (uv_estim(0) - uc) * r * r * r * r);
+            Eigen::RowVector2d vu((uv_estim(0) - uc) * r * r, (uv_estim(0) - uc) * r * r * r * r);
             D.conservativeResize(D.rows() + 1, 2);
             D.row(D.rows() - 1) = vu;
-            Eigen::RowVector2d vv((uv_estim(1) - vc) * r * r,
-                                  (uv_estim(1) - vc) * r * r * r * r);
+            Eigen::RowVector2d vv((uv_estim(1) - vc) * r * r, (uv_estim(1) - vc) * r * r * r * r);
             D.conservativeResize(D.rows() + 1, 2);
             D.row(D.rows() - 1) = vv;
 

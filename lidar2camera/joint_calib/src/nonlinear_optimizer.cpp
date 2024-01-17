@@ -235,7 +235,7 @@ void NonlinearOptimizer::refine_lidar2camera_params(
     for (size_t i = 0; i < lidar_point_pairs.size(); i++)
     {
         LidarPointPair lidar_pair = lidar_point_pairs[i];
-        for (size_t j = 0; j < 4; j++)
+        for (int j = 0; j < 4; j++)
         {
             Eigen::Vector3d lidar_3d_point(lidar_pair.lidar_3d_point[j].x, lidar_pair.lidar_3d_point[j].y, lidar_pair.lidar_3d_point[j].z);
             Eigen::Vector2d lidar_2d_point(lidar_pair.lidar_2d_point[j].x, lidar_pair.lidar_2d_point[j].y);
