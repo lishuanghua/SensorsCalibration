@@ -502,9 +502,9 @@ void CameraCalibrator::get_distortion(
     Eigen::VectorXd d;
     double uc = camera_matrix_(0, 2);
     double vc = camera_matrix_(1, 2);
-    for (int i = 0; i < _imgs_pts.size(); ++i)
+    for (size_t i = 0; i < _imgs_pts.size(); ++i)
     {
-        for (int j = 0; j < _imgs_pts[i].size(); ++j)
+        for (size_t j = 0; j < _imgs_pts[i].size(); ++j)
         {
             Eigen::Vector4d houm_coor(_boards_pts[i][j].x, _boards_pts[i][j].y, 0, 1);
             Eigen::Vector3d uv = camera_matrix_ * vec_extrinsics_[i] * houm_coor;
@@ -544,7 +544,7 @@ void CameraCalibrator::get_extrinsics(
     vec_extrinsics_.clear();
     Eigen::Matrix3d inv_camera_matrix = camera_matrix_.inverse();
 
-    for (int i = 0; i < vec_h_.size(); ++i)
+    for (size_t i = 0; i < vec_h_.size(); ++i)
     {
         Eigen::Vector3d s = inv_camera_matrix * vec_h_[i].col(0);
         double scalar_factor = 1 / s.norm();
@@ -576,7 +576,7 @@ void CameraCalibrator::create_v(
 
 void CameraCalibrator::get_camera_instrinsics(const std::vector<Eigen::Matrix3d> &vec_h_, Eigen::Matrix3d &camera_matrix_)
 {
-    int N = vec_h_.size();
+    size_t N = vec_h_.size();
     Eigen::MatrixXd V(2 * N, 6);
     V.setZero();
 
@@ -608,7 +608,7 @@ void CameraCalibrator::get_camera_instrinsics(const std::vector<Eigen::Matrix3d>
 void CameraCalibrator::get_homography(std::vector<Eigen::Matrix3d> &vec_h_)
 {
     vec_h_.clear();
-    for (int i = 0; i < _imgs_pts.size(); ++i)
+    for (size_t i = 0; i < _imgs_pts.size(); ++i)
     {
         Eigen::Matrix3d ini_H, refined_H;
         this->estimate_H(_imgs_pts[i], _boards_pts[i], ini_H);
@@ -624,7 +624,7 @@ void CameraCalibrator::estimate_H(
 {
     Eigen::Matrix3d matrix_normalize_img_pts;
     Eigen::Matrix3d matrix_normalize_board_pts;
-    int N = img_pts_.size();
+    size_t N = img_pts_.size();
     this->get_normalization_matrix(img_pts_, matrix_normalize_img_pts);
     this->get_normalization_matrix(board_pts_, matrix_normalize_board_pts);
     Eigen::MatrixXd M(2 * N, 9);
