@@ -1,14 +1,13 @@
 #include <eigen3/Eigen/Dense>
-
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-class LidarDetector {
-
+class LidarDetector
+{
 public:
-  LidarDetector(){};
-  ~LidarDetector(){};
+    LidarDetector(){};
+    ~LidarDetector(){};
 
-  void STLidarDetection(std::string pcds_dir);
+    void STLidarDetection(std::string pcds_dir);
 };
