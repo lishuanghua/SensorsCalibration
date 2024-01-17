@@ -76,9 +76,9 @@ bool IntrinsicCalibration::Calibrate(const std::string &img_dir_path,
     img_size_ = init_img.size();
     AutoImagePicker image_selector(img_size_.width, img_size_.height, corner_width, corner_height);
     // detect chessboard corner
-    int total_image_num = file_names.size();
+    size_t total_image_num = file_names.size();
     int detected_image_num = 0;
-    for (int i = 0; i < file_names.size(); i++)
+    for (size_t i = 0; i < file_names.size(); i++)
     {
         cv::Mat input_image = cv::imread(img_dir_path_ + file_names[i], 0);
         // detect corner
@@ -185,7 +185,7 @@ bool IntrinsicCalibration::undistortImages(const std::vector<std::string> &image
 
     cv::Mat map1, map2;
     cv::initUndistortRectifyMap(camera_intrinsic_, camera_dist_, cv::Mat(), camera_intrinsic_, img_size_, CV_32FC1, map1, map2);
-    for (int i = 0; i < image_names.size(); i++)
+    for (size_t i = 0; i < image_names.size(); i++)
     {
         cv::Mat input_image = cv::imread(img_dir_path_ + image_names[i]);
         std::string output_file_path = undistort_image_path_ + image_names[i];
@@ -194,4 +194,6 @@ bool IntrinsicCalibration::undistortImages(const std::vector<std::string> &image
 
         cv::imwrite(output_file_path, undistorted_image);
     }
+
+    return true;
 }
