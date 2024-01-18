@@ -15,14 +15,14 @@ bool ArucoMarkerDetector::detect(const std::vector<std::vector<float>> &imgGray,
                               CornerPoints *corner_pts) {
   std::vector<int> thres_box;
   float edge_fill_percent = 0.05;
-  int kernal[3][3] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+  // int kernal[3][3] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
   std::vector<bool> row_thresh(imgGray[0].size(), 0);
   std::vector<std::vector<bool>> thresh(imgGray.size(), row_thresh);
   std::vector<std::vector<bool>> dilate(imgGray.size(), row_thresh);
   CornerPoints pts;
   this->EstimateGrayThres(imgGray, &thres_box, edge_fill_percent);
 
-  for (int i = 0; i < thres_box.size(); ++i) {
+  for (size_t i = 0; i < thres_box.size(); ++i) {
     pts.clear();
     std::vector<std::vector<Point2f>> candidates;
     std::vector<std::vector<std::vector<Point2f>>> candidatesSet;
@@ -39,7 +39,7 @@ bool ArucoMarkerDetector::detect(const std::vector<std::vector<float>> &imgGray,
       continue;
 
     // sort corners
-    for (unsigned int i = 0; i < candidates.size(); i++) {
+    for (size_t i = 0; i < candidates.size(); i++) {
       double dx1 = candidates[i][1].x - candidates[i][0].x;
       double dy1 = candidates[i][1].y - candidates[i][0].y;
       double dx2 = candidates[i][2].x - candidates[i][0].x;
@@ -52,10 +52,10 @@ bool ArucoMarkerDetector::detect(const std::vector<std::vector<float>> &imgGray,
 
     filterTooCloseCandidates(candidates, candidatesSet, contours, contoursSet,
                              minMarkerDistanceRate_, detectInvertedMarker_);
-    int ncandidates = candidatesSet[0].size();
+    // size_t ncandidates = candidatesSet[0].size();
     candidates = candidatesSet[0];
 
-    for (int i = 0; i < candidates.size(); i++) {
+    for (size_t i = 0; i < candidates.size(); i++) {
       int ID = this->identifyOneCandidate(thresh, candidates[i], board_pattern);
       if (ID == -1)
         continue;
@@ -64,7 +64,7 @@ bool ArucoMarkerDetector::detect(const std::vector<std::vector<float>> &imgGray,
       if (pts.points.size() == board_pattern.id_box.size())
         break;
     }
-    if (pts.points.size() >= min_detected_marker_num_) {
+    if (pts.points.size() >= (size_t)min_detected_marker_num_) {
       *corner_pts = pts;
       return true;
     }
@@ -81,10 +81,10 @@ void ArucoMarkerDetector::filterTooCloseCandidates(
   std::vector<int> candGroup;
   candGroup.resize(candidatesIn.size(), -1);
   std::vector<std::vector<unsigned int>> groupedCandidates;
-  for (unsigned int i = 0; i < candidatesIn.size(); i++) {
-    for (unsigned int j = i + 1; j < candidatesIn.size(); j++) {
+  for (size_t i = 0; i < candidatesIn.size(); i++) {
+    for (size_t j = i + 1; j < candidatesIn.size(); j++) {
 
-      int minimumPerimeter =
+      size_t minimumPerimeter =
           std::min((int)contoursIn[i].size(), (int)contoursIn[j].size());
 
       // fc is the first corner considered on one of the markers, 4 combinations
@@ -149,12 +149,12 @@ void ArucoMarkerDetector::filterTooCloseCandidates(
   std::vector<std::vector<PointRDP>> smallerContours;
 
   // save possible candidates
-  for (unsigned int i = 0; i < groupedCandidates.size(); i++) {
+  for (size_t i = 0; i < groupedCandidates.size(); i++) {
     int smallerIdx = groupedCandidates[i][0];
     int biggerIdx = -1;
 
     // evaluate group elements
-    for (unsigned int j = 1; j < groupedCandidates[i].size(); j++) {
+    for (size_t j = 1; j < groupedCandidates[i].size(); j++) {
       size_t currPerim = contoursIn[groupedCandidates[i][j]].size();
 
       // check if current contour is bigger
@@ -180,7 +180,7 @@ void ArucoMarkerDetector::filterTooCloseCandidates(
       }
     }
   }
-  for (int i = 0; i < candGroup.size(); i++) {
+  for (size_t i = 0; i < candGroup.size(); i++) {
     if (candGroup[i] == -1) {
       biggerCandidates.emplace_back(candidatesIn[i]);
       biggerContours.emplace_back(contoursIn[i]);
@@ -251,8 +251,8 @@ void ArucoMarkerDetector::EstimateGrayThres(
     return;
   if (edge_fill_percent > 0.29)
     return;
-  int height = imgGray.size();
-  int width = imgGray[0].size();
+  size_t height = imgGray.size();
+  size_t width = imgGray[0].size();
   int edge_fill_thickness_x =
       static_cast<int>(edge_fill_percent * height * 1.7);
   int edge_fill_thickness_y = static_cast<int>(edge_fill_percent * width);
@@ -264,8 +264,8 @@ void ArucoMarkerDetector::EstimateGrayThres(
   std::vector<float> gray_distribution(256);
   int pixel_num = 0;
 
-  for (int i = edge_fill_thickness_x; i < height - edge_fill_thickness_x; i++) {
-    for (int j = edge_fill_thickness_y; j < width - edge_fill_thickness_y;
+  for (size_t i = edge_fill_thickness_x; i < height - edge_fill_thickness_x; i++) {
+    for (size_t j = edge_fill_thickness_y; j < width - edge_fill_thickness_y;
          j++) {
       aver_gray = (aver_gray * pixel_num + imgGray[i][j]) /
                   static_cast<float>(pixel_num + 1);
@@ -336,14 +336,14 @@ void ArucoMarkerDetector::ImageThreshold(
     return;
   if (edge_fill_percent > 0.29)
     return;
-  int height = imgGray.size();
-  int width = imgGray[0].size();
+  size_t height = imgGray.size();
+  size_t width = imgGray[0].size();
   int edge_fill_thickness_x =
       static_cast<int>(edge_fill_percent * height * 1.7);
   int edge_fill_thickness_y = static_cast<int>(edge_fill_percent * width);
   std::vector<std::vector<bool>> img_vec(height, std::vector<bool>(width));
-  for (int i = edge_fill_thickness_x; i < height - edge_fill_thickness_x; i++) {
-    for (int j = edge_fill_thickness_y; j < width - edge_fill_thickness_y;
+  for (size_t i = edge_fill_thickness_x; i < height - edge_fill_thickness_x; i++) {
+    for (size_t j = edge_fill_thickness_y; j < width - edge_fill_thickness_y;
          j++) {
       if (imgGray[i][j] < thresh_threshold) {
         img_vec[i][j] = 0;
@@ -410,7 +410,7 @@ void ArucoMarkerDetector::findMarkerContours(
   findContours(_in, contours);
 
   // now filter list of contours
-  for (unsigned int i = 0; i < contours.size(); i++) {
+  for (size_t i = 0; i < contours.size(); i++) {
     // check perimeter
     if (contours[i].size() < minPerimeterPixels ||
         contours[i].size() > maxPerimeterPixels)
@@ -483,16 +483,16 @@ void ArucoMarkerDetector::ApproxPolyDP(const std::vector<PointRDP> src_contour,
 
 #define READ_DST_PT(pt, pos)                                                   \
   pt = dst_contour[pos];                                                       \
-  if (++pos >= count)                                                          \
+  if (++pos >= (int)count)                                                          \
   pos = 0
 #define READ_PT(pt, pos)                                                       \
   pt = src_contour[pos];                                                       \
-  if (++pos >= count)                                                          \
+  if (++pos >= (int)count)                                                          \
   pos = 0
   std::vector<PointRDP> dst_contour;
   PointRDP slice(0, 0);
   PointRDP right_slice(0, 0);
-  int count = src_contour.size();
+  size_t count = src_contour.size();
   int init_iters = 3;
   int i = 0, j, pos = 0, wpos, new_count = 0;
   bool le_eps = false;
@@ -507,7 +507,7 @@ void ArucoMarkerDetector::ApproxPolyDP(const std::vector<PointRDP> src_contour,
     pos = int(pos + right_slice.x) % count;
 
     READ_PT(start_pt, pos);
-    for (j = 1; j < count; j++) {
+    for (j = 1; j < (int)count; j++) {
       double dx, dy;
       READ_PT(pt, pos);
       dx = pt.x - start_pt.x;
@@ -572,7 +572,7 @@ void ArucoMarkerDetector::ApproxPolyDP(const std::vector<PointRDP> src_contour,
   wpos = pos;
   READ_DST_PT(pt, pos);
   bool is_closed = true;
-  for (i = !is_closed; i < count - !is_closed && new_count > 2; i++) {
+  for (i = !is_closed; i < (int)count - !is_closed && new_count > 2; i++) {
     double dx, dy, dist, successive_inner_product;
     READ_DST_PT(end_pt, pos);
     dx = end_pt.x - start_pt.x;
@@ -584,14 +584,14 @@ void ArucoMarkerDetector::ApproxPolyDP(const std::vector<PointRDP> src_contour,
         successive_inner_product >= 0) {
       new_count--;
       dst_contour[wpos] = start_pt = end_pt;
-      if (++wpos >= count)
+      if (++wpos >= (int)count)
         wpos = 0;
       READ_DST_PT(pt, pos);
       i++;
       continue;
     }
     dst_contour[wpos] = start_pt = pt;
-    if (++wpos >= count)
+    if (++wpos >= (int)count)
       wpos = 0;
     pt = end_pt;
   }
@@ -607,16 +607,16 @@ void ArucoMarkerDetector::findContours(
     std::vector<std::vector<PointRDP>> &contours) {
   int **image;
   image = create2dArray(_in.size(), _in[0].size());
-  for (int ii = 0; ii < _in.size(); ii++) {
-    for (int jj = 0; jj < _in[0].size(); jj++) {
+  for (size_t ii = 0; ii < _in.size(); ii++) {
+    for (size_t jj = 0; jj < _in[0].size(); jj++) {
       if (_in[ii][jj])
         image[ii][jj] = 1;
       else
         image[ii][jj] = 0;
     }
   }
-  int numrows = _in.size();
-  int numcols = _in[0].size();
+  size_t numrows = _in.size();
+  size_t numcols = _in[0].size();
   struct Border NBD;
   struct Border LNBD;
   LNBD.border_type = HOLE_BORDER;
@@ -647,10 +647,10 @@ void ArucoMarkerDetector::findContours(
   struct PointRDP p2;
   bool border_start_found;
 
-  for (int r = 0; r < numrows; r++) {
+  for (size_t r = 0; r < numrows; r++) {
     LNBD.seq_num = 1;
     LNBD.border_type = HOLE_BORDER;
-    for (int c = 0; c < numcols; c++) {
+    for (size_t c = 0; c < numcols; c++) {
       border_start_found = false;
       // Phase 1: Find border
       // If fij = 1 and fi, j-1 = 0, then decide that the pixel (i, j) is the
@@ -728,7 +728,7 @@ void ArucoMarkerDetector::findContours(
     }
   }
 
-  int hierarchy_size;
+  // int hierarchy_size;
   int contour_size;
   int contour_index_size;
   struct PointRDP **contours_p =
@@ -803,8 +803,8 @@ bool ArucoMarkerDetector::getPixel(const std::vector<std::vector<bool>> &_src,
   int high_x = low_x + 1;
   int low_y = int(org_y);
   int high_y = low_y + 1;
-  if (low_x >= 0 && low_y >= 0 && high_x < _src[0].size() &&
-      high_y < _src.size()) {
+  if (low_x >= 0 && low_y >= 0 && high_x < (int)_src[0].size() &&
+      high_y < (int)_src.size()) {
     double mid_low =
         (_src[low_y][high_x] - _src[low_y][low_x]) * (org_x - low_x) +
         _src[low_y][low_x];
@@ -822,7 +822,7 @@ int ArucoMarkerDetector::findID(std::vector<bool> ID_detect,
                              std::vector<std::vector<bool>> ID_org) {
   int max_cnt = 0;
   int ID = -1;
-  for (int i = 0; i < ID_org.size(); i++) {
+  for (size_t i = 0; i < ID_org.size(); i++) {
     int cnt = 0;
     for (int j = 0; j < 16; j++) {
       if (ID_detect[j] == ID_org[i][j])
@@ -890,10 +890,10 @@ int ArucoMarkerDetector::extractBits(
   resultImgCorners.emplace_back(tmp_pf);
 
   // remove perspective
-  clock_t start, end;
-  start = clock();
+  // clock_t start, end;
+  // start = clock();
   float left = 99999, right = 0, top = 99999, bottom = 0;
-  for (int i = 0; i < _corners.size(); i++) {
+  for (size_t i = 0; i < _corners.size(); i++) {
     if (_corners[i].x < left)
       left = _corners[i].x;
     if (_corners[i].x > right)
@@ -912,14 +912,14 @@ int ArucoMarkerDetector::extractBits(
   std::vector<std::vector<bool>> threImg;
 
   warpPerspective(_image, threImg, transformation, resultImgSize);
-  end = clock();
-  double endtime = (double)(end - start) / CLOCKS_PER_SEC;
+  // end = clock();
+  // double endtime = (double)(end - start) / CLOCKS_PER_SEC;
 
-  start = clock();
+  // start = clock();
 
-  int edgeBits = markerBorderBits * cellSize;
-  int cellSize_col = cellSize * threImg[0].size() / resultImgSize;
-  int cellSize_row = cellSize * threImg.size() / resultImgSize;
+  // int edgeBits = markerBorderBits * cellSize;
+  size_t cellSize_col = cellSize * threImg[0].size() / resultImgSize;
+  size_t cellSize_row = cellSize * threImg.size() / resultImgSize;
   int edgeBits_col = markerBorderBits * cellSize_col;
   int edgeBits_row = markerBorderBits * cellSize_row;
   float cellSize_row_f = float((threImg.size() - 2 * edgeBits_row)) / 4;
@@ -933,8 +933,8 @@ int ArucoMarkerDetector::extractBits(
       int j = edgeBits_col + cellSize_col_f * col;
       int white = 0;
       int black = 0;
-      for (int ii = i; ii - i < cellSize_row; ii++) {
-        for (int jj = j; jj - j < cellSize_col; jj++) {
+      for (size_t ii = i; ii - i < cellSize_row; ii++) {
+        for (size_t jj = j; jj - j < cellSize_col; jj++) {
           if (threImg[ii][jj])
             white++;
           else
@@ -959,8 +959,8 @@ int ArucoMarkerDetector::extractBits(
     return ID;
 
   float judge = float(fault) / markerSize / markerSize;
-  end = clock();
-  endtime = (double)(end - start) / CLOCKS_PER_SEC;
+  // end = clock();
+  // endtime = (double)(end - start) / CLOCKS_PER_SEC;
 
   if (!(judge < 0.4 && all_black != 0 && all_white != 0 &&
         std::abs((float)all_white / all_black - 1) < 1.3 &&

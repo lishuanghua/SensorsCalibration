@@ -22,7 +22,7 @@ simplifyPath::findMaximumDistance(const std::vector<PointRDP> &Points) const {
 
   // distance calculation
   PointRDP p = lastpoint - firstpoint;
-  for (int i = 1; i < Points.size() - 1;
+  for (size_t i = 1; i < Points.size() - 1;
        i++) { // traverse through second PointRDP to second last PointRDP
     PointRDP pp = Points[i] - firstpoint;
     double Dist =

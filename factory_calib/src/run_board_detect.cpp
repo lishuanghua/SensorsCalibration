@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
       color_box.emplace_back(cv::Scalar(80, 80, 235));
       color_box.emplace_back(cv::Scalar(200, 0, 200));
       cv::Mat display_img = image.clone();
-      for (int i = 0; i < grid_center_points.size(); ++i) {
+      for (size_t i = 0; i < grid_center_points.size(); ++i) {
         cv::Point2f cv_pt;
         cv_pt.x = grid_center_points[i].x;
         cv_pt.y = grid_center_points[i].y;
@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
       color_box.emplace_back(cv::Scalar(80, 80, 235));
       color_box.emplace_back(cv::Scalar(200, 0, 200));
       cv::Mat display_img = image.clone();
-      for (int i = 0; i < corners.lines_.size(); ++i) {
+      for (size_t i = 0; i < corners.lines_.size(); ++i) {
         std::vector<Eigen::Vector2d> l_pts = corners.lines_[i]->m_line_pts;
         cv::Scalar color = color_box[i % 6];
         for (auto p : l_pts) {
@@ -139,8 +139,8 @@ int main(int argc, char **argv) {
       color_box.emplace_back(cv::Scalar(80, 80, 235));
       color_box.emplace_back(cv::Scalar(200, 0, 200));
       cv::Mat display_img = image.clone();
-      for (int i = 0; i < corners.points.size(); ++i) {
-        for (int j = 0; j < corners.points[i].size(); ++j) {
+      for (size_t i = 0; i < corners.points.size(); ++i) {
+        for (size_t j = 0; j < corners.points[i].size(); ++j) {
           Point2f pt = corners.points[i][j];
           if (pt.x < 1)
             continue;
@@ -200,7 +200,7 @@ int main(int argc, char **argv) {
     if (detections.size() == 36)
       sta = true;
     if (display_img && sta) {
-      for (int i = 0; i < detections.size(); i++) {
+      for (size_t i = 0; i < detections.size(); i++) {
         // also highlight in the image
         detections[i].draw(image);
       }

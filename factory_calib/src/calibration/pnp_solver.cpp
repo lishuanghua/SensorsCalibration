@@ -28,13 +28,13 @@ bool solvePnPbyDLT(const Eigen::Matrix3d &K,
     const double cx = K(0, 2);
     const double cy = K(1, 2);
 
-    const int n = pts3d.size();
+    const size_t n = pts3d.size();
 
     /*Solve PnP by DLT */
     // Step 1. Construct matrix A, whose size is 2n x 12.
     Eigen::MatrixXd A;
     A.resize(2 * n, 12);
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         const Eigen::Vector3d &pt3d = pts3d.at(i);
         const Eigen::Vector2d &pt2d = pts2d.at(i);
 
@@ -109,7 +109,7 @@ bool solvePnPbyDLT(const Eigen::Matrix3d &K,
     // Check + -
     int num_positive = 0;
     int num_negative = 0;
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         const Eigen::Vector3d &pt3d = pts3d.at(i);
         const double &x = pt3d[0];
         const double &y = pt3d[1];
@@ -256,7 +256,7 @@ bool solvePnPbyIterative(const Eigen::Matrix3d &K,
     if (pts2d.size() < 4 || pts2d.size() != pts3d.size()) {
         return false;
     }
-    int count = pts3d.size();
+    size_t count = pts3d.size();
     // std::cout<<"begin solve"<<std::endl;
     // convert image and world point to homogenous coordinate
     Eigen::MatrixXd m = covertPointsHomogenous(pts2d);
@@ -285,7 +285,7 @@ bool solvePnPbyIterative(const Eigen::Matrix3d &K,
         if ((*R_transform).determinant() < 0) *R_transform = -(*R_transform);
         T_transform = -MM_V * Mc;
 
-        for (int i = 0; i < count; ++i) {
+        for (size_t i = 0; i < count; ++i) {
             Point2float pt(0, 0);
             pt.x =
                 (*R_transform).row(0) * M.row(i).transpose() + T_transform(0);
@@ -323,7 +323,7 @@ bool solvePnPbyIterative(const Eigen::Matrix3d &K,
     problem.AddParameterBlock(q_param, 4, q_parameterization);
     problem.AddParameterBlock(t_param, 3);
 
-    for (int i = 0; i < count; i++) {
+    for (size_t i = 0; i < count; i++) {
         Eigen::Vector3d world_pt = pts3d[i];
         Eigen::Vector2d img_pt = pts2d[i];
         ceres::CostFunction *cost_function =
@@ -347,11 +347,11 @@ bool solvePnPbyIterative(const Eigen::Matrix3d &K,
 
 template <typename T>
 Eigen::MatrixXd covertPointsHomogenous(const std::vector<T> &pts) {
-    int dim = pts[0].size();
-    int count = pts.size();
+    size_t dim = pts[0].size();
+    size_t count = pts.size();
     Eigen::MatrixXd homo_pts;
     homo_pts.resize(count, dim);
-    for (int i = 0; i < count; ++i) {
+    for (size_t i = 0; i < count; ++i) {
         homo_pts.row(i) = pts[i];
         // homogenous
     }
@@ -561,7 +561,7 @@ bool solvePnPbyInitialParams(std::vector< std::vector<float> >& objpoints,  std:
 	tra[2] = tvec[2];
 
 	ceres::Problem problem;
-	for (int i = 0; i < imgpoints.size(); i++)
+	for (size_t i = 0; i < imgpoints.size(); i++)
 	{
 		ceres::CostFunction* cost = XCostFunctorPnP::create(objpoints[i], imgpoints[i], camera_intrinsic, dist_coeffs, tra);
 		problem.AddResidualBlock(cost, nullptr, rot, tra);
@@ -597,7 +597,7 @@ bool solveCamPnP(std::vector< std::vector<float> >& objpoints,  std::vector< std
 	tra[2] = tvec[2];
 
 	ceres::Problem problem;
-	for (int i = 0; i < imgpoints.size(); i++)
+	for (size_t i = 0; i < imgpoints.size(); i++)
 	{
 		ceres::CostFunction* cost = ZCostFunctorPnP::create(objpoints[i], imgpoints[i], camera_intrinsic, dist_coeffs, tra);
 		problem.AddResidualBlock(cost, nullptr, rot, tra);
@@ -633,7 +633,7 @@ bool solveLidarPnP(std::vector< std::vector<float> >& objpoints,  std::vector< s
 	tra[2] = tvec[2];
 
 	ceres::Problem problem;
-	for (int i = 0; i < lidarpoints.size(); i++)
+	for (size_t i = 0; i < lidarpoints.size(); i++)
 	{
 		ceres::CostFunction* cost = YCostFunctorPnP::create(objpoints[i], lidarpoints[i],tra);
 		problem.AddResidualBlock(cost, nullptr, rot, tra);
@@ -659,12 +659,12 @@ bool solveLidarPnP(std::vector< std::vector<float> >& objpoints,  std::vector< s
 
 void selectControlPoints(const std::vector<Eigen::Vector3d> &pts3d,
                          std::vector<Eigen::Vector3d> *control_points) {
-    const int n = pts3d.size();
+    const size_t n = pts3d.size();
     control_points->reserve(4);
 
     // select the center points
     Eigen::Vector3d cw1(0.0, 0.0, 0.0);
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         cw1 += pts3d.at(i);
     }
     cw1 /= static_cast<double>(n);
@@ -672,7 +672,7 @@ void selectControlPoints(const std::vector<Eigen::Vector3d> &pts3d,
     // // PCA
     Eigen::MatrixXd A;
     A.resize(n, 3);
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         A.block(i, 0, 1, 3) = (pts3d.at(i) - cw1).transpose();
     }
     Eigen::Matrix3d ATA = A.transpose() * A;
@@ -700,7 +700,7 @@ void computeHomogeneousBarycentricCoordinates(
     const std::vector<Eigen::Vector3d> &pts3d,
     const std::vector<Eigen::Vector3d> &control_points,
     std::vector<Eigen::Vector4d> *hb_coordinates) {
-    const int n = pts3d.size();
+    const size_t n = pts3d.size();
     hb_coordinates->clear();
     hb_coordinates->reserve(n);
 
@@ -713,7 +713,7 @@ void computeHomogeneousBarycentricCoordinates(
     Eigen::Matrix4d C_inv = C.inverse();
 
     // compute \alpha_ij for all points
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         Eigen::Vector4d ptw(0.0, 0.0, 0.0, 1.0);
         ptw.block(0, 0, 3, 1) = pts3d.at(i);
         hb_coordinates->push_back(C_inv * ptw);
@@ -731,10 +731,10 @@ void constructM(const Eigen::Matrix3d &K,
     const double cy = K(1, 2);
 
     // init M
-    const int n = pts2d.size();
+    const size_t n = pts2d.size();
     M->resize(2 * n, 12);
 
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         // get alphas
         const Eigen::Vector4d &alphas = hb_coordinates.at(i);
 
@@ -1046,11 +1046,11 @@ void rebuiltPts3dCamera(
     const std::vector<Eigen::Vector3d> &camera_control_points,
     const std::vector<Eigen::Vector4d> &hb_coordinates,
     std::vector<Eigen::Vector3d> *pts3d_camera) {
-    const int n = hb_coordinates.size();
+    const size_t n = hb_coordinates.size();
     pts3d_camera->clear();
     pts3d_camera->reserve(n);
 
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         Eigen::Vector4d alphas = hb_coordinates.at(i);
 
         Eigen::Vector3d ptc = camera_control_points[0] * alphas[0] +
@@ -1112,7 +1112,7 @@ double reprojectionError(const Eigen::Matrix3d &K,
                          const std::vector<Eigen::Vector2d> &pts2d,
                          const Eigen::Matrix3d &R,
                          const Eigen::Vector3d &t) {
-    const int n = pts3d_world.size();
+    const size_t n = pts3d_world.size();
     double sum_err2 = 0.0;
     for (size_t i = 0; i < pts3d_world.size(); i++) {
         const Eigen::Vector3d &ptw = pts3d_world.at(i);
