@@ -64,18 +64,20 @@ static void stdvec2cvmat(const std::vector<std::vector<int>> &img,
 }
 */
 
-static void cvmat2stdvec(const cv::Mat &src,
-                         std::vector<std::vector<float>> &img) {
-  img.resize(src.rows, std::vector<float>(src.cols));
-  std::cout << "img.size(): " << img.size() << std::endl;
-  std::cout << "img[0].size(): " << img[0].size() << std::endl;
-  for (size_t i = 0; i < img.size(); i++) {
-    for (size_t j = 0; j < img[0].size(); j++) {
-      img[i][j] = src.at<float>(i, j);
-      // img[i][j] = float(src.at<unsigned char>(i,j));
+static void cvmat2stdvec(const cv::Mat &src, std::vector<std::vector<float>> &img)
+{
+    img.resize(src.rows, std::vector<float>(src.cols));
+    std::cout << "img.size(): " << img.size() << std::endl;
+    std::cout << "img[0].size(): " << img[0].size() << std::endl;
+    for (size_t i = 0; i < img.size(); i++)
+    {
+        for (size_t j = 0; j < img[0].size(); j++)
+        {
+            img[i][j] = src.at<float>(i, j);
+            // img[i][j] = float(src.at<unsigned char>(i,j));
+        }
     }
-  }
-  std::cout << std::endl;
+    std::cout << std::endl;
 }
 
 #endif /*UTILS_DATACONVERT_HPP_*/

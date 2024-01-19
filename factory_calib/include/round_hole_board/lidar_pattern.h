@@ -4,15 +4,15 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace lidarcalib {
+namespace lidarcalib
+{
+    class LidarDetector
+    {
+    public:
+        LidarDetector(){};
+        ~LidarDetector(){};
 
-class LidarDetector {
-
-public:
-  LidarDetector(){};
-  ~LidarDetector(){};
-
-  void LidarDetection(std::string pcds_dir);
-};
+        void LidarDetection(std::string pcds_dir);
+    };
 
 } // lidarcalib

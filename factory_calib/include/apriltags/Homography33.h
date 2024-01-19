@@ -1,11 +1,8 @@
-//-*-c++-*-
-
 #ifndef HOMOGRAPHY33_H
 #define HOMOGRAPHY33_H
 
 #include <utility>
 #include <vector>
-
 #include <Eigen/Dense>
 
 // interpolate points instead of using homography
@@ -38,34 +35,34 @@
  *  of how many correspondences we're given, and has the same
  *  eigenvectors as A.
  */
-class Homography33 {
+class Homography33
+{
 public:
-  //! Constructor
-  Homography33(const std::pair<float,float> &opticalCenter);
+    //! Constructor
+    Homography33(const std::pair<float, float> &opticalCenter);
 
 #ifdef STABLE_H
-  void setCorrespondences(const std::vector< std::pair<float,float> > &srcPts,
-                          const std::vector< std::pair<float,float> > &dstPts);
+    void setCorrespondences(const std::vector<std::pair<float, float>> &srcPts, const std::vector<std::pair<float, float>> &dstPts);
 #else
-  void addCorrespondence(float worldx, float worldy, float imagex, float imagey);
+    void addCorrespondence(float worldx, float worldy, float imagex, float imagey);
 #endif
 
-  //! Note that the returned H matrix does not reflect cxy.
-  Eigen::Matrix3d& getH();
+    //! Note that the returned H matrix does not reflect cxy.
+    Eigen::Matrix3d &getH();
 
-  const std::pair<float,float> getCXY() const { return cxy; }
+    const std::pair<float, float> getCXY() const { return cxy; }
 
-  void compute();
+    void compute();
 
-  std::pair<float,float> project(float worldx, float worldy);
+    std::pair<float, float> project(float worldx, float worldy);
 
 private:
-  std::pair<float,float> cxy;
-  Eigen::Matrix<double,9,9> fA;
-  Eigen::Matrix3d H;
-  bool valid;
+    std::pair<float, float> cxy;
+    Eigen::Matrix<double, 9, 9> fA;
+    Eigen::Matrix3d H;
+    bool valid;
 #ifdef STABLE_H
-  std::vector< std::pair<float,float> > srcPts, dstPts;
+    std::vector<std::pair<float, float>> srcPts, dstPts;
 #endif
 };
 

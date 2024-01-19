@@ -1,5 +1,4 @@
-/*
- * Copyright (C) 2021 by Autonomous Driving Group, Shanghai AI Laboratory
+/* Copyright (C) 2021 by Autonomous Driving Group, Shanghai AI Laboratory
  * Limited. All rights reserved.
  * Yan Guohang <yanguohang@pjlab.org.cn>
  * Liu Zhuochun <liuzhuochun@pjlab.org.cn>
@@ -13,12 +12,15 @@ bool solvePnPbyDLT(const Eigen::Matrix3d &K,
                    const std::vector<Eigen::Vector3d> &pts3d,
                    const std::vector<Eigen::Vector2d> &pts2d,
                    Eigen::Matrix3d *R,
-                   Eigen::Vector3d *t) {
-    if (R == nullptr || t == nullptr) {
+                   Eigen::Vector3d *t)
+{
+    if (R == nullptr || t == nullptr)
+    {
         return false;
     }
     // Check input
-    if (pts3d.size() != pts2d.size() || pts3d.size() < 6) {
+    if (pts3d.size() != pts2d.size() || pts3d.size() < 6)
+    {
         return false;
     }
 
@@ -34,7 +36,8 @@ bool solvePnPbyDLT(const Eigen::Matrix3d &K,
     // Step 1. Construct matrix A, whose size is 2n x 12.
     Eigen::MatrixXd A;
     A.resize(2 * n, 12);
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++)
+    {
         const Eigen::Vector3d &pt3d = pts3d.at(i);
         const Eigen::Vector2d &pt2d = pts2d.at(i);
 
@@ -69,7 +72,7 @@ bool solvePnPbyDLT(const Eigen::Matrix3d &K,
         A(2 * i + 1, 9) = y * cy - v * y;
         A(2 * i + 1, 10) = z * cy - v * z;
         A(2 * i + 1, 11) = cy - v;
-    }  // construct matrix A.
+    } // construct matrix A.
 
     // Step 2. Solve Ax = 0 by SVD
     Eigen::JacobiSVD<Eigen::MatrixXd> svd_A(A, Eigen::ComputeThinV);
@@ -93,8 +96,7 @@ bool solvePnPbyDLT(const Eigen::Matrix3d &K,
     // Step 3. Reconstruct Rotation Matrix R and beta.
     Eigen::Matrix3d R_bar;
     R_bar << a1, a2, a3, a5, a6, a7, a9, a10, a11;
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd_R(
-        R_bar, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd_R(R_bar, Eigen::ComputeFullU | Eigen::ComputeFullV);
     Eigen::Matrix3d U_R = svd_R.matrixU();
     Eigen::Matrix3d V_R = svd_R.matrixV();
     Eigen::Vector3d V_Sigma = svd_R.singularValues();
@@ -109,21 +111,26 @@ bool solvePnPbyDLT(const Eigen::Matrix3d &K,
     // Check + -
     int num_positive = 0;
     int num_negative = 0;
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++)
+    {
         const Eigen::Vector3d &pt3d = pts3d.at(i);
         const double &x = pt3d[0];
         const double &y = pt3d[1];
         const double &z = pt3d[2];
 
         double lambda = beta * (x * a9 + y * a10 + z * a11 + a12);
-        if (lambda >= 0) {
+        if (lambda >= 0)
+        {
             num_positive++;
-        } else {
+        }
+        else
+        {
             num_negative++;
         }
     }
 
-    if (num_positive < num_negative) {
+    if (num_positive < num_negative)
+    {
         *R = -*R;
         *t = -*t;
     }
@@ -139,12 +146,15 @@ bool solvePnPbyEPnP(const Eigen::Matrix3d &K,
                     const std::vector<Eigen::Vector3d> &pts3d,
                     const std::vector<Eigen::Vector2d> &pts2d,
                     Eigen::Matrix3d *R,
-                    Eigen::Vector3d *t) {
-    if (R == nullptr || t == nullptr) {
+                    Eigen::Vector3d *t)
+{
+    if (R == nullptr || t == nullptr)
+    {
         return false;
     }
     // Check input data.
-    if (pts2d.size() < 4 || pts2d.size() != pts3d.size()) {
+    if (pts2d.size() < 4 || pts2d.size() != pts3d.size())
+    {
         return false;
     }
 
@@ -154,8 +164,7 @@ bool solvePnPbyEPnP(const Eigen::Matrix3d &K,
 
     // compute homogeneous barycentric coordinates
     std::vector<Eigen::Vector4d> hb_coordinates;
-    computeHomogeneousBarycentricCoordinates(pts3d, world_control_points,
-                                             &hb_coordinates);
+    computeHomogeneousBarycentricCoordinates(pts3d, world_control_points, &hb_coordinates);
 
     // compute control point in camera coordinate frame.
     // construct Mx = 0
@@ -181,12 +190,10 @@ bool solvePnPbyEPnP(const Eigen::Matrix3d &K,
         optimizeBeta(L, rho, &betas);
 
         std::vector<Eigen::Vector3d> camera_control_points;
-        computeCameraControlPoints(eigen_vectors, betas,
-                                   &camera_control_points);
+        computeCameraControlPoints(eigen_vectors, betas, &camera_control_points);
 
         std::vector<Eigen::Vector3d> pts3d_camera;
-        rebuiltPts3dCamera(camera_control_points, hb_coordinates,
-                           &pts3d_camera);
+        rebuiltPts3dCamera(camera_control_points, hb_coordinates, &pts3d_camera);
 
         computeRt(pts3d_camera, pts3d, &tmp_R, &tmp_t);
     }
@@ -199,20 +206,21 @@ bool solvePnPbyEPnP(const Eigen::Matrix3d &K,
         optimizeBeta(L, rho, &betas);
 
         std::vector<Eigen::Vector3d> camera_control_points;
-        computeCameraControlPoints(eigen_vectors, betas,
-                                   &camera_control_points);
+        computeCameraControlPoints(eigen_vectors, betas, &camera_control_points);
 
         std::vector<Eigen::Vector3d> pts3d_camera;
-        rebuiltPts3dCamera(camera_control_points, hb_coordinates,
-                           &pts3d_camera);
+        rebuiltPts3dCamera(camera_control_points, hb_coordinates, &pts3d_camera);
 
         computeRt(pts3d_camera, pts3d, &tmp_R, &tmp_t);
     }
     double err3 = reprojectionError(K, pts3d, pts2d, tmp_R, tmp_t);
-    if (err3 < err2) {
+    if (err3 < err2)
+    {
         *R = tmp_R;
         *t = tmp_t;
-    } else {
+    }
+    else
+    {
         err3 = err2;
     }
 
@@ -222,23 +230,22 @@ bool solvePnPbyEPnP(const Eigen::Matrix3d &K,
         optimizeBeta(L, rho, &betas);
 
         std::vector<Eigen::Vector3d> camera_control_points;
-        computeCameraControlPoints(eigen_vectors, betas,
-                                   &camera_control_points);
+        computeCameraControlPoints(eigen_vectors, betas, &camera_control_points);
 
         std::vector<Eigen::Vector3d> pts3d_camera;
-        rebuiltPts3dCamera(camera_control_points, hb_coordinates,
-                           &pts3d_camera);
+        rebuiltPts3dCamera(camera_control_points, hb_coordinates, &pts3d_camera);
 
         computeRt(pts3d_camera, pts3d, &tmp_R, &tmp_t);
     }
     double err4 = reprojectionError(K, pts3d, pts2d, tmp_R, tmp_t);
-    if (err4 < err3) {
+    if (err4 < err3)
+    {
         *R = tmp_R;
         *t = tmp_t;
     }
 
     return true;
-}  // solve PnP by EPnP
+} // solve PnP by EPnP
 
 /******************************************
  * **************** Iter ******************
@@ -248,12 +255,15 @@ bool solvePnPbyIterative(const Eigen::Matrix3d &K,
                          const std::vector<Eigen::Vector3d> &pts3d,
                          const std::vector<Eigen::Vector2d> &pts2d,
                          Eigen::Matrix3d *R,
-                         Eigen::Vector3d *t) {
-    if (R == nullptr || t == nullptr) {
+                         Eigen::Vector3d *t)
+{
+    if (R == nullptr || t == nullptr)
+    {
         return false;
     }
     // Check input data.
-    if (pts2d.size() < 4 || pts2d.size() != pts3d.size()) {
+    if (pts2d.size() < 4 || pts2d.size() != pts3d.size())
+    {
         return false;
     }
     size_t count = pts3d.size();
@@ -265,8 +275,7 @@ bool solvePnPbyIterative(const Eigen::Matrix3d &K,
     Eigen::MatrixXd M_minus_mid = M.rowwise() - Mc.transpose();
     Eigen::MatrixXd MM = M_minus_mid.transpose() * M_minus_mid;
 
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(
-        MM, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(MM, Eigen::ComputeFullU | Eigen::ComputeFullV);
     Eigen::MatrixXd MM_U = svd.matrixU();
     Eigen::MatrixXd MM_V = svd.matrixV();
     Eigen::VectorXd MM_D = svd.singularValues();
@@ -274,28 +283,36 @@ bool solvePnPbyIterative(const Eigen::Matrix3d &K,
     std::vector<Point2float> M_xy;
     std::vector<Point2float> m_img;
     // initialize extrinsic parameters
-    if (MM_D(2) / MM_D(1) < 1e-3) {
+    if (MM_D(2) / MM_D(1) < 1e-3)
+    {
         // a planar structure case (all M's lie in the same plane)
         Eigen::MatrixXd *R_transform = &MM_V;
         Eigen::Vector3d T_transform;
         Eigen::Matrix3d matH;
 
         if (MM_V(0, 2) * MM_V(0, 2) + MM_V(1, 2) * MM_V(1, 2) < 1e-10)
+        {
             *R_transform = Eigen::Matrix3d::Identity();
-        if ((*R_transform).determinant() < 0) *R_transform = -(*R_transform);
+        }
+        if ((*R_transform).determinant() < 0)
+        {
+            *R_transform = -(*R_transform);
+        }
         T_transform = -MM_V * Mc;
 
-        for (size_t i = 0; i < count; ++i) {
+        for (size_t i = 0; i < count; ++i)
+        {
             Point2float pt(0, 0);
-            pt.x =
-                (*R_transform).row(0) * M.row(i).transpose() + T_transform(0);
-            pt.y =
-                (*R_transform).row(1) * M.row(i).transpose() + T_transform(1);
+            pt.x = (*R_transform).row(0) * M.row(i).transpose() + T_transform(0);
+            pt.y = (*R_transform).row(1) * M.row(i).transpose() + T_transform(1);
             M_xy.emplace_back(pt);
             m_img.emplace_back(Point2float(pts2d[i](0), pts2d[i](1)));
         }
         bool homo_flag = CeresSolveHomography(M_xy, m_img, 0.02, &matH);
-        if (!homo_flag) return false;
+        if (!homo_flag)
+        {
+            return false;
+        }
 
         double h1_norm = matH.col(0).norm();
         double h2_norm = matH.col(1).norm();
@@ -305,7 +322,9 @@ bool solvePnPbyIterative(const Eigen::Matrix3d &K,
         matH.col(2) = matH.col(0).cross(matH.col(1));
         *R = matH * (*R_transform);
         *t = matH * T_transform + H_trans;
-    } else {
+    }
+    else
+    {
         solvePnPbyEPnP(K, pts3d, pts2d, R, t);
     }
 
@@ -315,19 +334,18 @@ bool solvePnPbyIterative(const Eigen::Matrix3d &K,
     double q_param[4] = {rot_q.w(), rot_q.x(), rot_q.y(), rot_q.z()};
     double t_param[3] = {(*t)(0), (*t)(1), (*t)(2)};
     // ceres::LossFunction *loss_function = new ceres::HuberLoss(0.1);
-    ceres::LocalParameterization *q_parameterization =
-        new ceres::EigenQuaternionParameterization();
+    ceres::LocalParameterization *q_parameterization = new ceres::EigenQuaternionParameterization();
     ceres::Problem::Options problem_options;
 
     ceres::Problem problem(problem_options);
     problem.AddParameterBlock(q_param, 4, q_parameterization);
     problem.AddParameterBlock(t_param, 3);
 
-    for (size_t i = 0; i < count; i++) {
+    for (size_t i = 0; i < count; i++)
+    {
         Eigen::Vector3d world_pt = pts3d[i];
         Eigen::Vector2d img_pt = pts2d[i];
-        ceres::CostFunction *cost_function =
-            CameraProjectFactor::Create(world_pt, img_pt, K);
+        ceres::CostFunction *cost_function = CameraProjectFactor::Create(world_pt, img_pt, K);
         problem.AddResidualBlock(cost_function, NULL, q_param, t_param);
     }
 
@@ -339,332 +357,369 @@ bool solvePnPbyIterative(const Eigen::Matrix3d &K,
     options.minimizer_progress_to_stdout = false;
     ceres::Solver::Summary summary;
     ceres::Solve(options, &problem, &summary);
-    *R = Eigen::Quaterniond(q_param[0], q_param[1], q_param[2], q_param[3])
-             .toRotationMatrix();
+    *R = Eigen::Quaterniond(q_param[0], q_param[1], q_param[2], q_param[3]).toRotationMatrix();
     *t = Eigen::Vector3d(t_param[0], t_param[1], t_param[2]);
+
     return true;
 }
 
 template <typename T>
-Eigen::MatrixXd covertPointsHomogenous(const std::vector<T> &pts) {
+Eigen::MatrixXd covertPointsHomogenous(const std::vector<T> &pts)
+{
     size_t dim = pts[0].size();
     size_t count = pts.size();
     Eigen::MatrixXd homo_pts;
     homo_pts.resize(count, dim);
-    for (size_t i = 0; i < count; ++i) {
+    for (size_t i = 0; i < count; ++i)
+    {
         homo_pts.row(i) = pts[i];
         // homogenous
     }
+
     return homo_pts;
 }
 
 struct YCostFunctorPnP
 {
-	std::vector<float> object_point_;
-	std::vector<float> lidar_point_;
+    std::vector<float> object_point_;
+    std::vector<float> lidar_point_;
     double *tra_;
-	YCostFunctorPnP( std::vector<float> objpoint,  std::vector<float> lidarpoint,double *tra):
-		object_point_(objpoint), lidar_point_(lidarpoint),tra_(tra){}
+    YCostFunctorPnP(std::vector<float> objpoint, std::vector<float> lidarpoint, double *tra)
+        : object_point_(objpoint), lidar_point_(lidarpoint), tra_(tra) {}
 
-	template<typename T>
-	bool operator()(const T* const rot, const T* const tra, T* residual) const
-	{
-		T point_in[3];
-		T point_out[3];
-		point_in[0] = T(lidar_point_[0]);
-		point_in[1] = T(lidar_point_[1]);
-		point_in[2] = T(lidar_point_[2]);
-		// rotation
-		ceres::AngleAxisRotatePoint(rot, point_in, point_out);  // rotate point by the given rot value
-		// translation
-		point_out[0] += T(tra_[0]);
-		point_out[1] += T(tra_[1]);
-		point_out[2] += T(tra_[2]);
+    template <typename T>
+    bool operator()(const T *const rot, const T *const tra, T *residual) const
+    {
+        T point_in[3];
+        T point_out[3];
+        point_in[0] = T(lidar_point_[0]);
+        point_in[1] = T(lidar_point_[1]);
+        point_in[2] = T(lidar_point_[2]);
+        // rotation
+        ceres::AngleAxisRotatePoint(rot, point_in, point_out); // rotate point by the given rot value
+        // translation
+        point_out[0] += T(tra_[0]);
+        point_out[1] += T(tra_[1]);
+        point_out[2] += T(tra_[2]);
 
-		residual[0] = point_out[0] - T(object_point_[0]);
-		residual[1] = point_out[1] - T(object_point_[1]);
+        residual[0] = point_out[0] - T(object_point_[0]);
+        residual[1] = point_out[1] - T(object_point_[1]);
         residual[2] = point_out[2] - T(object_point_[2]);
         // std::cout<<"residual: "<<residual[0]<<','<<residual[1]<<','<<residual[2]<<std::endl;
 
-		return true;
-	}
+        return true;
+    }
 
-	static ceres::CostFunction* create( std::vector<float> objpoint, 
-		 std::vector<float> lidarpoint,double *tra)
-	{
-		return new ceres::AutoDiffCostFunction<YCostFunctorPnP, 3, 3, 3>
-			(new YCostFunctorPnP(objpoint, lidarpoint,tra));
-	}
+    static ceres::CostFunction *create(std::vector<float> objpoint, std::vector<float> lidarpoint, double *tra)
+    {
+        return new ceres::AutoDiffCostFunction<YCostFunctorPnP, 3, 3, 3>(new YCostFunctorPnP(objpoint, lidarpoint, tra));
+    }
 };
 
 struct XCostFunctorPnP
 {
-	std::vector<float> object_point_;
-	std::vector<float> image_point_;
-	std::vector< std::vector<double> > K_;
-	std::vector<double> D_;
+    std::vector<float> object_point_;
+    std::vector<float> image_point_;
+    std::vector<std::vector<double>> K_;
+    std::vector<double> D_;
     double *tra_;
-	XCostFunctorPnP( std::vector<float> objpoint,  std::vector<float> imgpoint,  std::vector< std::vector<double> > camera_intrinsic,  std::vector<double> dist_coeffs,double *tra):
-		object_point_(objpoint), image_point_(imgpoint), K_(camera_intrinsic), D_(dist_coeffs),tra_(tra){}
+    XCostFunctorPnP(
+        std::vector<float> objpoint, std::vector<float> imgpoint,
+        std::vector<std::vector<double>> camera_intrinsic, std::vector<double> dist_coeffs, double *tra)
+        : object_point_(objpoint), image_point_(imgpoint), K_(camera_intrinsic), D_(dist_coeffs), tra_(tra) {}
 
-	template<typename T>
-	bool operator()(const T* const rot, const T* const tra, T* residual) const
-	{
-		T point_in[3];
-		T point_out[3];
-		point_in[0] = T(object_point_[0]);
-		point_in[1] = T(object_point_[1]);
-		point_in[2] = T(object_point_[2]);
-		// rotation
-		ceres::AngleAxisRotatePoint(rot, point_in, point_out);  // rotate point by the given rot value
-		// translation
-		point_out[0] += T(tra[0]);
-		point_out[1] += T(tra[1]);
-		point_out[2] += T(tra[2]);
-		
-		// projection 
-		T x = point_out[0] / point_out[2];
-		T y = point_out[1] / point_out[2];
-		// undistortation with dist coefficients as [k1, k2, p1, p2, k3]
-		// if (!D_empty())
-		T r2 = x * x + y * y;
-		T xy = x * y;
-		x = x * (1.0 + D_[0] * r2 + D_[1] * r2 * r2) + 2.0 * xy * D_[2]
-			+ (r2 + 2.0*x * x) * D_[3];
-		y = y * (1.0 + D_[0] * r2 + D_[1] * r2 * r2) + 2.0 * xy * D_[3]
-			+ (r2 + 2.0*y * y) * D_[2];
-		// to image plane
-		T u = x * K_[0][0] + K_[0][2];
-		T v = y * K_[1][1] + K_[1][2];
-		
-		T u_img = T(image_point_[0]);
-		T v_img = T(image_point_[1]);
+    template <typename T>
+    bool operator()(const T *const rot, const T *const tra, T *residual) const
+    {
+        T point_in[3];
+        T point_out[3];
+        point_in[0] = T(object_point_[0]);
+        point_in[1] = T(object_point_[1]);
+        point_in[2] = T(object_point_[2]);
+        // rotation
+        ceres::AngleAxisRotatePoint(rot, point_in, point_out); // rotate point by the given rot value
+        // translation
+        point_out[0] += T(tra[0]);
+        point_out[1] += T(tra[1]);
+        point_out[2] += T(tra[2]);
 
-		residual[0] = u - u_img;
-		residual[1] = v - v_img;
+        // projection
+        T x = point_out[0] / point_out[2];
+        T y = point_out[1] / point_out[2];
+        // undistortation with dist coefficients as [k1, k2, p1, p2, k3]
+        // if (!D_empty())
+        T r2 = x * x + y * y;
+        T xy = x * y;
+        x = x * (1.0 + D_[0] * r2 + D_[1] * r2 * r2) + 2.0 * xy * D_[2] + (r2 + 2.0 * x * x) * D_[3];
+        y = y * (1.0 + D_[0] * r2 + D_[1] * r2 * r2) + 2.0 * xy * D_[3] + (r2 + 2.0 * y * y) * D_[2];
+        // to image plane
+        T u = x * K_[0][0] + K_[0][2];
+        T v = y * K_[1][1] + K_[1][2];
+
+        T u_img = T(image_point_[0]);
+        T v_img = T(image_point_[1]);
+
+        residual[0] = u - u_img;
+        residual[1] = v - v_img;
         // std::cout<<"residual: "<<residual[0]<<','<<residual[1]<<std::endl;
 
-		return true;
-	}
+        return true;
+    }
 
-	static ceres::CostFunction* create( std::vector<float> objpoint, 
-		 std::vector<float> imgpoint,  std::vector< std::vector<double> > camera_intrinsic,  std::vector<double> dist_coeffs,double *tra)
-	{
-		return new ceres::AutoDiffCostFunction<XCostFunctorPnP, 2, 3, 3>
-			(new XCostFunctorPnP(objpoint, imgpoint, camera_intrinsic, dist_coeffs,tra));
-	}
+    static ceres::CostFunction *create(
+        std::vector<float> objpoint,
+        std::vector<float> imgpoint,
+        std::vector<std::vector<double>> camera_intrinsic,
+        std::vector<double> dist_coeffs,
+        double *tra)
+    {
+        return new ceres::AutoDiffCostFunction<XCostFunctorPnP, 2, 3, 3>(
+            new XCostFunctorPnP(objpoint, imgpoint, camera_intrinsic, dist_coeffs, tra));
+    }
 };
 
 struct ZCostFunctorPnP
 {
-	std::vector<float> object_point_;
-	std::vector<float> image_point_;
-	std::vector< std::vector<double> > K_;
-	std::vector<double> D_;
+    std::vector<float> object_point_;
+    std::vector<float> image_point_;
+    std::vector<std::vector<double>> K_;
+    std::vector<double> D_;
     double *tra_;
-	ZCostFunctorPnP( std::vector<float> objpoint,  std::vector<float> imgpoint,  std::vector< std::vector<double> > camera_intrinsic,  std::vector<double> dist_coeffs,double *tra):
-		object_point_(objpoint), image_point_(imgpoint), K_(camera_intrinsic), D_(dist_coeffs),tra_(tra){}
+    ZCostFunctorPnP(
+        std::vector<float> objpoint,
+        std::vector<float> imgpoint,
+        std::vector<std::vector<double>> camera_intrinsic,
+        std::vector<double> dist_coeffs, double *tra)
+        : object_point_(objpoint), image_point_(imgpoint), K_(camera_intrinsic), D_(dist_coeffs), tra_(tra) {}
 
-	template<typename T>
-	bool operator()(const T* const rot, const T* const tra, T* residual) const
-	{
-		T point_in[3];
-		T point_out[3];
-		point_in[0] = T(object_point_[0]);
-		point_in[1] = T(object_point_[1]);
-		point_in[2] = T(object_point_[2]);
-		// rotation
-        T theta=sqrt(rot[0]*rot[0]+rot[1]*rot[1]+rot[2]*rot[2]);
-        T rx=rot[0]/theta;
-        T ry=rot[1]/theta;
-        T rz=rot[2]/theta;
-        Eigen::Matrix<T,4,4> extrin;
-        extrin(0,0)=T(0.0);
-        extrin(0,1)=sin(theta)*(-rz);
-        extrin(0,2)=sin(theta)*(ry);
-        extrin(0,3)=T(tra_[0]);
-        extrin(1,0)=sin(theta)*(rz);
-        extrin(1,1)=T(0.0);
-        extrin(1,2)=sin(theta)*(-rx);
-        extrin(1,3)=T(tra_[1]);
-        extrin(2,0)=sin(theta)*(-ry);
-        extrin(2,1)=sin(theta)*(rx);
-        extrin(2,2)=T(0.0);
-        extrin(2,3)=T(tra_[2]);
-        extrin(3,0)=T(0.0);
-        extrin(3,1)=T(0.0);
-        extrin(3,2)=T(0.0);
-        extrin(3,3)=T(1.0);
-        Eigen::Matrix<T,3,1> r;
-        r(0,0)=rx;
-        r(1,0)=ry;
-        r(2,0)=rz;
-        Eigen::Matrix<T,3,3> rr=(T(1.0)-cos(theta))*r*r.transpose();
-        for(int i=0;i<3;i++)
-            for(int j=0;j<3;j++)
-                extrin(i,j)+=rr(i,j);
-        for(int i=0;i<3;i++)
-            extrin(i,i)+=cos(theta);
-        extrin=extrin.inverse().eval();
-        Eigen::Matrix<T,4,1> pt_in;
-        pt_in(0,0)=point_in[0];
-        pt_in(1,0)=point_in[1];
-        pt_in(2,0)=point_in[2];
-        pt_in(3,0)=T(1.0);
-        Eigen::Matrix<T,4,1> pt_out=extrin*pt_in;
-        point_out[0]=pt_out(0,0);
-        point_out[1]=pt_out(1,0);
-        point_out[2]=pt_out(2,0);
-		
-		// projection 
-		T x = point_out[0] / point_out[2];
-		T y = point_out[1] / point_out[2];
-		// undistortation with dist coefficients as [k1, k2, p1, p2, k3]
-		// if (!D_empty())
-		T r2 = x * x + y * y;
-		T xy = x * y;
-		x = x * (1.0 + D_[0] * r2 + D_[1] * r2 * r2) + 2.0 * xy * D_[2]
-			+ (r2 + 2.0*x * x) * D_[3];
-		y = y * (1.0 + D_[0] * r2 + D_[1] * r2 * r2) + 2.0 * xy * D_[3]
-			+ (r2 + 2.0*y * y) * D_[2];
-		// to image plane
-		T u = x * K_[0][0] + K_[0][2];
-		T v = y * K_[1][1] + K_[1][2];
-		
-		T u_img = T(image_point_[0]);
-		T v_img = T(image_point_[1]);
+    template <typename T>
+    bool operator()(const T *const rot, const T *const tra, T *residual) const
+    {
+        T point_in[3];
+        T point_out[3];
+        point_in[0] = T(object_point_[0]);
+        point_in[1] = T(object_point_[1]);
+        point_in[2] = T(object_point_[2]);
+        // rotation
+        T theta = sqrt(rot[0] * rot[0] + rot[1] * rot[1] + rot[2] * rot[2]);
+        T rx = rot[0] / theta;
+        T ry = rot[1] / theta;
+        T rz = rot[2] / theta;
+        Eigen::Matrix<T, 4, 4> extrin;
+        extrin(0, 0) = T(0.0);
+        extrin(0, 1) = sin(theta) * (-rz);
+        extrin(0, 2) = sin(theta) * (ry);
+        extrin(0, 3) = T(tra_[0]);
+        extrin(1, 0) = sin(theta) * (rz);
+        extrin(1, 1) = T(0.0);
+        extrin(1, 2) = sin(theta) * (-rx);
+        extrin(1, 3) = T(tra_[1]);
+        extrin(2, 0) = sin(theta) * (-ry);
+        extrin(2, 1) = sin(theta) * (rx);
+        extrin(2, 2) = T(0.0);
+        extrin(2, 3) = T(tra_[2]);
+        extrin(3, 0) = T(0.0);
+        extrin(3, 1) = T(0.0);
+        extrin(3, 2) = T(0.0);
+        extrin(3, 3) = T(1.0);
+        Eigen::Matrix<T, 3, 1> r;
+        r(0, 0) = rx;
+        r(1, 0) = ry;
+        r(2, 0) = rz;
+        Eigen::Matrix<T, 3, 3> rr = (T(1.0) - cos(theta)) * r * r.transpose();
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                extrin(i, j) += rr(i, j);
+            }
+        }
+        for (int i = 0; i < 3; i++)
+        {
+            extrin(i, i) += cos(theta);
+        }
+        extrin = extrin.inverse().eval();
+        Eigen::Matrix<T, 4, 1> pt_in;
+        pt_in(0, 0) = point_in[0];
+        pt_in(1, 0) = point_in[1];
+        pt_in(2, 0) = point_in[2];
+        pt_in(3, 0) = T(1.0);
+        Eigen::Matrix<T, 4, 1> pt_out = extrin * pt_in;
+        point_out[0] = pt_out(0, 0);
+        point_out[1] = pt_out(1, 0);
+        point_out[2] = pt_out(2, 0);
 
-		residual[0] = u - u_img;
-		residual[1] = v - v_img;
+        // projection
+        T x = point_out[0] / point_out[2];
+        T y = point_out[1] / point_out[2];
+        // undistortation with dist coefficients as [k1, k2, p1, p2, k3]
+        // if (!D_empty())
+        T r2 = x * x + y * y;
+        T xy = x * y;
+        x = x * (1.0 + D_[0] * r2 + D_[1] * r2 * r2) + 2.0 * xy * D_[2] + (r2 + 2.0 * x * x) * D_[3];
+        y = y * (1.0 + D_[0] * r2 + D_[1] * r2 * r2) + 2.0 * xy * D_[3] + (r2 + 2.0 * y * y) * D_[2];
+        // to image plane
+        T u = x * K_[0][0] + K_[0][2];
+        T v = y * K_[1][1] + K_[1][2];
+
+        T u_img = T(image_point_[0]);
+        T v_img = T(image_point_[1]);
+
+        residual[0] = u - u_img;
+        residual[1] = v - v_img;
         // std::cout<<"residual: "<<residual[0]<<','<<residual[1]<<std::endl;
 
-		return true;
-	}
+        return true;
+    }
 
-	static ceres::CostFunction* create( std::vector<float> objpoint, 
-		 std::vector<float> imgpoint,  std::vector< std::vector<double> > camera_intrinsic,  std::vector<double> dist_coeffs,double *tra)
-	{
-		return new ceres::AutoDiffCostFunction<ZCostFunctorPnP, 2, 3, 3>
-			(new ZCostFunctorPnP(objpoint, imgpoint, camera_intrinsic, dist_coeffs,tra));
-	}
+    static ceres::CostFunction *create(
+        std::vector<float> objpoint,
+        std::vector<float> imgpoint,
+        std::vector<std::vector<double>> camera_intrinsic,
+        std::vector<double> dist_coeffs, double *tra)
+    {
+        return new ceres::AutoDiffCostFunction<ZCostFunctorPnP, 2, 3, 3>(
+            new ZCostFunctorPnP(objpoint, imgpoint, camera_intrinsic, dist_coeffs, tra));
+    }
 };
 
-bool solvePnPbyInitialParams(std::vector< std::vector<float> >& objpoints,  std::vector< std::vector<float> >& imgpoints, 
-	 std::vector< std::vector<double> >& camera_intrinsic,  std::vector<double>& dist_coeffs, std::vector<float>& rvec, std::vector<float>& tvec){
-	double rot[3];
-	double tra[3];
-	rot[0] = rvec[0];
-	rot[1] = rvec[1];
-	rot[2] = rvec[2];
-	tra[0] = tvec[0];
-	tra[1] = tvec[1];
-	tra[2] = tvec[2];
+bool solvePnPbyInitialParams(
+    std::vector<std::vector<float>> &objpoints,
+    std::vector<std::vector<float>> &imgpoints,
+    std::vector<std::vector<double>> &camera_intrinsic,
+    std::vector<double> &dist_coeffs,
+    std::vector<float> &rvec,
+    std::vector<float> &tvec)
+{
+    double rot[3];
+    double tra[3];
+    rot[0] = rvec[0];
+    rot[1] = rvec[1];
+    rot[2] = rvec[2];
+    tra[0] = tvec[0];
+    tra[1] = tvec[1];
+    tra[2] = tvec[2];
 
-	ceres::Problem problem;
-	for (size_t i = 0; i < imgpoints.size(); i++)
-	{
-		ceres::CostFunction* cost = XCostFunctorPnP::create(objpoints[i], imgpoints[i], camera_intrinsic, dist_coeffs, tra);
-		problem.AddResidualBlock(cost, nullptr, rot, tra);
-	}
+    ceres::Problem problem;
+    for (size_t i = 0; i < imgpoints.size(); i++)
+    {
+        ceres::CostFunction *cost = XCostFunctorPnP::create(objpoints[i], imgpoints[i], camera_intrinsic, dist_coeffs, tra);
+        problem.AddResidualBlock(cost, nullptr, rot, tra);
+    }
 
-	ceres::Solver::Options options;
-	options.linear_solver_type = ceres::DENSE_SCHUR;
-	options.max_num_iterations = 80;
-	options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
-	options.minimizer_progress_to_stdout = false;
+    ceres::Solver::Options options;
+    options.linear_solver_type = ceres::DENSE_SCHUR;
+    options.max_num_iterations = 80;
+    options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
+    options.minimizer_progress_to_stdout = false;
 
-	ceres::Solver::Summary summary;
-	ceres::Solve(options, &problem, &summary);
+    ceres::Solver::Summary summary;
+    ceres::Solve(options, &problem, &summary);
 
     rvec[0] = rot[0];
-	rvec[1] = rot[1];
-	rvec[2] = rot[2];
+    rvec[1] = rot[1];
+    rvec[2] = rot[2];
     tvec[0] = tra[0];
-	tvec[1] = tra[1];
-	tvec[2] = tra[2];
+    tvec[1] = tra[1];
+    tvec[2] = tra[2];
+
     return true;
 }
 
-bool solveCamPnP(std::vector< std::vector<float> >& objpoints,  std::vector< std::vector<float> >& imgpoints, 
-	 std::vector< std::vector<double> >& camera_intrinsic,  std::vector<double>& dist_coeffs, std::vector<float>& rvec, std::vector<float>& tvec){
-	double rot[3];
-	double tra[3];
-	rot[0] = rvec[0];
-	rot[1] = rvec[1];
-	rot[2] = rvec[2];
-	tra[0] = tvec[0];
-	tra[1] = tvec[1];
-	tra[2] = tvec[2];
+bool solveCamPnP(
+    std::vector<std::vector<float>> &objpoints,
+    std::vector<std::vector<float>> &imgpoints,
+    std::vector<std::vector<double>> &camera_intrinsic,
+    std::vector<double> &dist_coeffs,
+    std::vector<float> &rvec,
+    std::vector<float> &tvec)
+{
+    double rot[3];
+    double tra[3];
+    rot[0] = rvec[0];
+    rot[1] = rvec[1];
+    rot[2] = rvec[2];
+    tra[0] = tvec[0];
+    tra[1] = tvec[1];
+    tra[2] = tvec[2];
 
-	ceres::Problem problem;
-	for (size_t i = 0; i < imgpoints.size(); i++)
-	{
-		ceres::CostFunction* cost = ZCostFunctorPnP::create(objpoints[i], imgpoints[i], camera_intrinsic, dist_coeffs, tra);
-		problem.AddResidualBlock(cost, nullptr, rot, tra);
-	}
+    ceres::Problem problem;
+    for (size_t i = 0; i < imgpoints.size(); i++)
+    {
+        ceres::CostFunction *cost = ZCostFunctorPnP::create(objpoints[i], imgpoints[i], camera_intrinsic, dist_coeffs, tra);
+        problem.AddResidualBlock(cost, nullptr, rot, tra);
+    }
 
-	ceres::Solver::Options options;
-	options.linear_solver_type = ceres::DENSE_SCHUR;
-	options.max_num_iterations = 80;
-	options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
-	options.minimizer_progress_to_stdout = false;
+    ceres::Solver::Options options;
+    options.linear_solver_type = ceres::DENSE_SCHUR;
+    options.max_num_iterations = 80;
+    options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
+    options.minimizer_progress_to_stdout = false;
 
-	ceres::Solver::Summary summary;
-	ceres::Solve(options, &problem, &summary);
+    ceres::Solver::Summary summary;
+    ceres::Solve(options, &problem, &summary);
 
     rvec[0] = rot[0];
-	rvec[1] = rot[1];
-	rvec[2] = rot[2];
+    rvec[1] = rot[1];
+    rvec[2] = rot[2];
     tvec[0] = tra[0];
-	tvec[1] = tra[1];
-	tvec[2] = tra[2];
+    tvec[1] = tra[1];
+    tvec[2] = tra[2];
     return true;
 }
 
-bool solveLidarPnP(std::vector< std::vector<float> >& objpoints,  std::vector< std::vector<float> >& lidarpoints, 
-	  std::vector<float>& rvec, std::vector<float>& tvec){
-	double rot[3];
-	double tra[3];
-	rot[0] = rvec[0];
-	rot[1] = rvec[1];
-	rot[2] = rvec[2];
-	tra[0] = tvec[0];
-	tra[1] = tvec[1];
-	tra[2] = tvec[2];
+bool solveLidarPnP(
+    std::vector<std::vector<float>> &objpoints,
+    std::vector<std::vector<float>> &lidarpoints,
+    std::vector<float> &rvec,
+    std::vector<float> &tvec)
+{
+    double rot[3];
+    double tra[3];
+    rot[0] = rvec[0];
+    rot[1] = rvec[1];
+    rot[2] = rvec[2];
+    tra[0] = tvec[0];
+    tra[1] = tvec[1];
+    tra[2] = tvec[2];
 
-	ceres::Problem problem;
-	for (size_t i = 0; i < lidarpoints.size(); i++)
-	{
-		ceres::CostFunction* cost = YCostFunctorPnP::create(objpoints[i], lidarpoints[i],tra);
-		problem.AddResidualBlock(cost, nullptr, rot, tra);
-	}
+    ceres::Problem problem;
+    for (size_t i = 0; i < lidarpoints.size(); i++)
+    {
+        ceres::CostFunction *cost = YCostFunctorPnP::create(objpoints[i], lidarpoints[i], tra);
+        problem.AddResidualBlock(cost, nullptr, rot, tra);
+    }
 
-	ceres::Solver::Options options;
-	options.linear_solver_type = ceres::DENSE_SCHUR;
-	options.max_num_iterations = 80;
-	options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
-	options.minimizer_progress_to_stdout = false;
+    ceres::Solver::Options options;
+    options.linear_solver_type = ceres::DENSE_SCHUR;
+    options.max_num_iterations = 80;
+    options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
+    options.minimizer_progress_to_stdout = false;
 
-	ceres::Solver::Summary summary;
-	ceres::Solve(options, &problem, &summary);
+    ceres::Solver::Summary summary;
+    ceres::Solve(options, &problem, &summary);
 
     rvec[0] = rot[0];
-	rvec[1] = rot[1];
-	rvec[2] = rot[2];
+    rvec[1] = rot[1];
+    rvec[2] = rot[2];
     tvec[0] = tra[0];
-	tvec[1] = tra[1];
-	tvec[2] = tra[2];
+    tvec[1] = tra[1];
+    tvec[2] = tra[2];
+
     return true;
 }
 
-void selectControlPoints(const std::vector<Eigen::Vector3d> &pts3d,
-                         std::vector<Eigen::Vector3d> *control_points) {
+void selectControlPoints(
+    const std::vector<Eigen::Vector3d> &pts3d,
+    std::vector<Eigen::Vector3d> *control_points)
+{
     const size_t n = pts3d.size();
     control_points->reserve(4);
 
     // select the center points
     Eigen::Vector3d cw1(0.0, 0.0, 0.0);
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++)
+    {
         cw1 += pts3d.at(i);
     }
     cw1 /= static_cast<double>(n);
@@ -672,7 +727,8 @@ void selectControlPoints(const std::vector<Eigen::Vector3d> &pts3d,
     // // PCA
     Eigen::MatrixXd A;
     A.resize(n, 3);
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++)
+    {
         A.block(i, 0, 1, 3) = (pts3d.at(i) - cw1).transpose();
     }
     Eigen::Matrix3d ATA = A.transpose() * A;
@@ -694,36 +750,41 @@ void selectControlPoints(const std::vector<Eigen::Vector3d> &pts3d,
     control_points->push_back(cw2);
     control_points->push_back(cw3);
     control_points->push_back(cw4);
-}  // select control points
+} // select control points
 
 void computeHomogeneousBarycentricCoordinates(
     const std::vector<Eigen::Vector3d> &pts3d,
     const std::vector<Eigen::Vector3d> &control_points,
-    std::vector<Eigen::Vector4d> *hb_coordinates) {
+    std::vector<Eigen::Vector4d> *hb_coordinates)
+{
     const size_t n = pts3d.size();
     hb_coordinates->clear();
     hb_coordinates->reserve(n);
 
     // construct C
     Eigen::Matrix4d C;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
         C.block(0, i, 3, 1) = control_points.at(i);
     }
     C.block(3, 0, 1, 4) = Eigen::Vector4d(1.0, 1.0, 1.0, 1.0);
     Eigen::Matrix4d C_inv = C.inverse();
 
     // compute \alpha_ij for all points
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++)
+    {
         Eigen::Vector4d ptw(0.0, 0.0, 0.0, 1.0);
         ptw.block(0, 0, 3, 1) = pts3d.at(i);
         hb_coordinates->push_back(C_inv * ptw);
     }
-}  // computeHomogeneousBarycentricCoordinates
+} // computeHomogeneousBarycentricCoordinates
 
-void constructM(const Eigen::Matrix3d &K,
-                const std::vector<Eigen::Vector4d> &hb_coordinates,
-                const std::vector<Eigen::Vector2d> &pts2d,
-                Eigen::MatrixXd *M) {
+void constructM(
+    const Eigen::Matrix3d &K,
+    const std::vector<Eigen::Vector4d> &hb_coordinates,
+    const std::vector<Eigen::Vector2d> &pts2d,
+    Eigen::MatrixXd *M)
+{
     // get camera intrinsics
     const double fx = K(0, 0);
     const double fy = K(1, 1);
@@ -734,7 +795,8 @@ void constructM(const Eigen::Matrix3d &K,
     const size_t n = pts2d.size();
     M->resize(2 * n, 12);
 
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++)
+    {
         // get alphas
         const Eigen::Vector4d &alphas = hb_coordinates.at(i);
 
@@ -784,13 +846,15 @@ void constructM(const Eigen::Matrix3d &K,
         (*M)(id1, 9) = 0.0;
         (*M)(id1, 10) = alpha_i4 * fy;
         (*M)(id1, 11) = alpha_i4 * (cy - v);
-    }  // Fill M.
-}  // construct M
+    } // Fill M.
+} // construct M
 
 void getFourEigenVectors(
     const Eigen::MatrixXd &M,
-    Eigen::Matrix<double, static_cast<int>(12), static_cast<int>(4)>
-        *eigen_vectors) {
+    Eigen::Matrix<double,
+                  static_cast<int>(12),
+                  static_cast<int>(4)> *eigen_vectors)
+{
     Eigen::Matrix<double, 12, 12> MTM = M.transpose() * M;
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, 12, 12>> es(MTM);
 
@@ -800,14 +864,15 @@ void getFourEigenVectors(
 }
 
 void computeL(
-    const Eigen::Matrix<double, static_cast<int>(12), static_cast<int>(4)>
-        &eigen_vectors,
-    Eigen::Matrix<double, static_cast<int>(6), static_cast<int>(10)> *L) {
+    const Eigen::Matrix<double, static_cast<int>(12), static_cast<int>(4)> &eigen_vectors,
+    Eigen::Matrix<double, static_cast<int>(6), static_cast<int>(10)> *L)
+{
     // [B11 B12 B22 B13 B23 B33 B14 B24 B34 B44]
     const int idx0[6] = {0, 0, 0, 1, 1, 2};
     const int idx1[6] = {1, 2, 3, 2, 3, 3};
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++)
+    {
         const int idi = idx0[i] * 3;
         const int idj = idx1[i] * 3;
 
@@ -845,15 +910,15 @@ void computeL(
         (*L)(i, 8) = 2 * S3_T * S4;
         (*L)(i, 9) = S4_T * S4;
     }
-}  // compute L
+} // compute L
 
-void computeRho(const std::vector<Eigen::Vector3d> &control_points,
-                Eigen::Matrix<double, 6, 1> *rho) {
+void computeRho(const std::vector<Eigen::Vector3d> &control_points, Eigen::Matrix<double, 6, 1> *rho)
+{
     const int idx0[6] = {0, 0, 0, 1, 1, 2};
     const int idx1[6] = {1, 2, 3, 2, 3, 3};
-    for (int i = 0; i < 6; i++) {
-        Eigen::Vector3d v01 =
-            control_points.at(idx0[i]) - control_points.at(idx1[i]);
+    for (int i = 0; i < 6; i++)
+    {
+        Eigen::Vector3d v01 = control_points.at(idx0[i]) - control_points.at(idx1[i]);
         (*rho)(i, 0) = (v01.transpose() * v01);
     }
 }
@@ -862,22 +927,27 @@ void solveBetaN2(
     const Eigen::Matrix<double, 12, 4> &eigen_vectors,
     const Eigen::Matrix<double, static_cast<int>(6), static_cast<int>(10)> &L,
     const Eigen::Matrix<double, 6, 1> &rho,
-    Eigen::Vector4d *betas) {
+    Eigen::Vector4d *betas)
+{
     //                  [B11 B12 B22 B13 B23 B33 B14 B24 B34 B44]
     // betas_approx_2 = [B11 B12 B22                            ]
 
     const Eigen::Matrix<double, 6, 3> &L_approx = L.block(0, 0, 6, 3);
     Eigen::Vector3d b3 = L_approx.fullPivHouseholderQr().solve(rho);
 
-    if (b3[0] < 0) {
+    if (b3[0] < 0)
+    {
         (*betas)[0] = sqrt(-b3[0]);
         (*betas)[1] = (b3[2] < 0) ? sqrt(-b3[2]) : 0.0;
-    } else {
+    }
+    else
+    {
         (*betas)[0] = sqrt(b3[0]);
         (*betas)[1] = (b3[2] > 0) ? sqrt(b3[2]) : 0.0;
     }
 
-    if (b3[1] < 0) {
+    if (b3[1] < 0)
+    {
         (*betas)[0] = -(*betas)[0];
     }
 
@@ -887,7 +957,8 @@ void solveBetaN2(
     // Check betas.
     std::vector<Eigen::Vector3d> camera_control_points;
     computeCameraControlPoints(eigen_vectors, *betas, &camera_control_points);
-    if (isGoodBetas(camera_control_points) == false) {
+    if (isGoodBetas(camera_control_points) == false)
+    {
         *betas = -*betas;
     }
 }
@@ -896,20 +967,25 @@ void solveBetaN3(
     const Eigen::Matrix<double, 12, 4> &eigen_vectors,
     const Eigen::Matrix<double, static_cast<int>(6), static_cast<int>(10)> &L,
     const Eigen::Matrix<double, static_cast<int>(6), static_cast<int>(1)> &rho,
-    Eigen::Vector4d *betas) {
+    Eigen::Vector4d *betas)
+{
     //                  [B11 B12 B22 B13 B23 B33 B14 B24 B34 B44]
     // betas_approx_3 = [B11 B12 B22 B13 B23                    ]
     const Eigen::Matrix<double, 6, 5> &L_approx = L.block(0, 0, 6, 5);
     Eigen::Matrix<double, 5, 1> b5 = L_approx.fullPivHouseholderQr().solve(rho);
 
-    if (b5[0] < 0) {
+    if (b5[0] < 0)
+    {
         (*betas)[0] = sqrt(-b5[0]);
         (*betas)[1] = (b5[2] < 0) ? sqrt(-b5[2]) : 0.0;
-    } else {
+    }
+    else
+    {
         (*betas)[0] = sqrt(b5[0]);
         (*betas)[1] = (b5[2] > 0) ? sqrt(b5[2]) : 0.0;
     }
-    if (b5[1] < 0) {
+    if (b5[1] < 0)
+    {
         (*betas)[0] = -(*betas)[0];
     }
     (*betas)[2] = b5[3] / (*betas)[0];
@@ -918,7 +994,8 @@ void solveBetaN3(
     // Check betas.
     std::vector<Eigen::Vector3d> camera_control_points;
     computeCameraControlPoints(eigen_vectors, *betas, &camera_control_points);
-    if (isGoodBetas(camera_control_points) == false) {
+    if (isGoodBetas(camera_control_points) == false)
+    {
         *betas = -*betas;
     }
 }
@@ -927,7 +1004,8 @@ void solveBetaN4(
     const Eigen::Matrix<double, 12, 4> &eigen_vectors,
     const Eigen::Matrix<double, static_cast<int>(6), static_cast<int>(10)> &L,
     const Eigen::Matrix<double, static_cast<int>(6), static_cast<int>(1)> &rho,
-    Eigen::Vector4d *betas) {
+    Eigen::Vector4d *betas)
+{
     // betas10        = [B11 B12 B22 B13 B23 B33 B14 B24 B34 B44]
     // betas_approx_1 = [B11 B12     B13         B14]
 
@@ -938,12 +1016,15 @@ void solveBetaN4(
 
     Eigen::Vector4d b4 = L_approx.fullPivHouseholderQr().solve(rho);
 
-    if (b4[0] < 0) {
+    if (b4[0] < 0)
+    {
         (*betas)[0] = sqrt(-b4[0]);
         (*betas)[1] = -b4[1] / (*betas)[0];
         (*betas)[2] = -b4[2] / (*betas)[0];
         (*betas)[3] = -b4[3] / (*betas)[0];
-    } else {
+    }
+    else
+    {
         (*betas)[0] = sqrt(b4[0]);
         (*betas)[1] = b4[1] / (*betas)[0];
         (*betas)[2] = b4[2] / (*betas)[0];
@@ -953,7 +1034,8 @@ void solveBetaN4(
     // Check betas.
     std::vector<Eigen::Vector3d> camera_control_points;
     computeCameraControlPoints(eigen_vectors, *betas, &camera_control_points);
-    if (isGoodBetas(camera_control_points) == false) {
+    if (isGoodBetas(camera_control_points) == false)
+    {
         *betas = -*betas;
     }
 }
@@ -961,22 +1043,21 @@ void solveBetaN4(
 void optimizeBeta(
     const Eigen::Matrix<double, static_cast<int>(6), static_cast<int>(10)> &L,
     const Eigen::Matrix<double, static_cast<int>(6), static_cast<int>(1)> &rho,
-    Eigen::Vector4d *betas) {
+    Eigen::Vector4d *betas)
+{
     const int iter_num = 5;
 
-    for (int nit = 0; nit < iter_num; nit++) {
+    for (int nit = 0; nit < iter_num; nit++)
+    {
         // construct J
         Eigen::Matrix<double, 6, 4> J;
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 6; i++)
+        {
             // [B11 B12 B22 B13 B23 B33 B14 B24 B34 B44]
-            J(i, 0) = 2 * (*betas)[0] * L(i, 0) + (*betas)[1] * L(i, 1) +
-                      (*betas)[2] * L(i, 3) + (*betas)[3] * L(i, 6);
-            J(i, 1) = (*betas)[0] * L(i, 1) + 2 * (*betas)[1] * L(i, 2) +
-                      (*betas)[2] * L(i, 3) + (*betas)[3] * L(i, 7);
-            J(i, 2) = (*betas)[0] * L(i, 3) + (*betas)[1] * L(i, 4) +
-                      2 * (*betas)[2] * L(i, 5) + (*betas)[3] * L(i, 8);
-            J(i, 3) = (*betas)[0] * L(i, 6) + (*betas)[1] * L(i, 7) +
-                      (*betas)[2] * L(i, 8) + 2 * (*betas)[3] * L(i, 9);
+            J(i, 0) = 2 * (*betas)[0] * L(i, 0) + (*betas)[1] * L(i, 1) + (*betas)[2] * L(i, 3) + (*betas)[3] * L(i, 6);
+            J(i, 1) = (*betas)[0] * L(i, 1) + 2 * (*betas)[1] * L(i, 2) + (*betas)[2] * L(i, 3) + (*betas)[3] * L(i, 7);
+            J(i, 2) = (*betas)[0] * L(i, 3) + (*betas)[1] * L(i, 4) + 2 * (*betas)[2] * L(i, 5) + (*betas)[3] * L(i, 8);
+            J(i, 3) = (*betas)[0] * L(i, 6) + (*betas)[1] * L(i, 7) + (*betas)[2] * L(i, 8) + 2 * (*betas)[3] * L(i, 9);
         }
 
         Eigen::Matrix<double, 4, 6> J_T = J.transpose();
@@ -996,19 +1077,19 @@ void optimizeBeta(
         // std::cout << "Error " << residual.transpose() * residual << "\n";
 
         // Solve J^T * J \delta_beta = -J^T * residual;
-        Eigen::Matrix<double, 4, 1> delta_betas =
-            H.fullPivHouseholderQr().solve(-J_T * residual);
+        Eigen::Matrix<double, 4, 1> delta_betas = H.fullPivHouseholderQr().solve(-J_T * residual);
 
         // update betas;
         *betas += delta_betas;
-    }  // iter n times.
-}  //
+    } // iter n times.
+} //
 
 void computeCameraControlPoints(
     const Eigen::Matrix<double, static_cast<int>(12), static_cast<int>(4)>
         &eigen_vectors,
     const Eigen::Vector4d &betas,
-    std::vector<Eigen::Vector3d> *camera_control_points) {
+    std::vector<Eigen::Vector3d> *camera_control_points)
+{
     camera_control_points->clear();
     camera_control_points->reserve(4);
 
@@ -1018,24 +1099,31 @@ void computeCameraControlPoints(
         betas[2] * eigen_vectors.block(0, 2, 12, 1) +
         betas[3] * eigen_vectors.block(0, 3, 12, 1);
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
         camera_control_points->push_back(vec.block(i * 3, 0, 3, 1));
     }
 }
 
-bool isGoodBetas(const std::vector<Eigen::Vector3d> &camera_control_points) {
+bool isGoodBetas(const std::vector<Eigen::Vector3d> &camera_control_points)
+{
     int num_positive = 0;
     int num_negative = 0;
 
-    for (int i = 0; i < 4; i++) {
-        if (camera_control_points.at(i)[2] > 0) {
+    for (int i = 0; i < 4; i++)
+    {
+        if (camera_control_points.at(i)[2] > 0)
+        {
             num_positive++;
-        } else {
+        }
+        else
+        {
             num_negative++;
         }
     }
 
-    if (num_negative >= num_positive) {
+    if (num_negative >= num_positive)
+    {
         return false;
     }
 
@@ -1045,12 +1133,14 @@ bool isGoodBetas(const std::vector<Eigen::Vector3d> &camera_control_points) {
 void rebuiltPts3dCamera(
     const std::vector<Eigen::Vector3d> &camera_control_points,
     const std::vector<Eigen::Vector4d> &hb_coordinates,
-    std::vector<Eigen::Vector3d> *pts3d_camera) {
+    std::vector<Eigen::Vector3d> *pts3d_camera)
+{
     const size_t n = hb_coordinates.size();
     pts3d_camera->clear();
     pts3d_camera->reserve(n);
 
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++)
+    {
         Eigen::Vector4d alphas = hb_coordinates.at(i);
 
         Eigen::Vector3d ptc = camera_control_points[0] * alphas[0] +
@@ -1064,13 +1154,15 @@ void rebuiltPts3dCamera(
 void computeRt(const std::vector<Eigen::Vector3d> &pts3d_camera,
                const std::vector<Eigen::Vector3d> &pts3d_world,
                Eigen::Matrix3d *R,
-               Eigen::Vector3d *t) {
+               Eigen::Vector3d *t)
+{
     const int n = pts3d_camera.size();
     // step 1. compute center points
     Eigen::Vector3d pcc(0.0, 0.0, 0.0);
     Eigen::Vector3d pcw(0.0, 0.0, 0.0);
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
+    {
         pcc += pts3d_camera.at(i);
         pcw += pts3d_world.at(i);
     }
@@ -1083,7 +1175,8 @@ void computeRt(const std::vector<Eigen::Vector3d> &pts3d_camera,
     Pc.resize(n, 3);
     Pw.resize(n, 3);
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
+    {
         Pc.block(i, 0, 1, 3) = (pts3d_camera.at(i) - pcc).transpose();
 
         Pw.block(i, 0, 1, 3) = (pts3d_world.at(i) - pcw).transpose();
@@ -1092,14 +1185,14 @@ void computeRt(const std::vector<Eigen::Vector3d> &pts3d_camera,
     // step 3. compute R.
     Eigen::Matrix3d W = Pc.transpose() * Pw;
 
-    Eigen::JacobiSVD<Eigen::Matrix3d> svd(
-        W, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Eigen::JacobiSVD<Eigen::Matrix3d> svd(W, Eigen::ComputeFullU | Eigen::ComputeFullV);
     Eigen::Matrix3d U = svd.matrixU();
     Eigen::Matrix3d V = svd.matrixV();
 
     *R = U * V.transpose();
 
-    if (R->determinant() < 0) {
+    if (R->determinant() < 0)
+    {
         R->block(2, 0, 1, 3) = -R->block(2, 0, 1, 3);
     }
 
@@ -1111,10 +1204,12 @@ double reprojectionError(const Eigen::Matrix3d &K,
                          const std::vector<Eigen::Vector3d> &pts3d_world,
                          const std::vector<Eigen::Vector2d> &pts2d,
                          const Eigen::Matrix3d &R,
-                         const Eigen::Vector3d &t) {
+                         const Eigen::Vector3d &t)
+{
     const size_t n = pts3d_world.size();
     double sum_err2 = 0.0;
-    for (size_t i = 0; i < pts3d_world.size(); i++) {
+    for (size_t i = 0; i < pts3d_world.size(); i++)
+    {
         const Eigen::Vector3d &ptw = pts3d_world.at(i);
         Eigen::Vector3d lamda_uv = K * (R * ptw + t);
         Eigen::Vector2d uv = lamda_uv.block(0, 0, 2, 1) / lamda_uv(2);
