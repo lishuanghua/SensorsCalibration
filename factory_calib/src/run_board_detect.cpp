@@ -1,9 +1,9 @@
-/*
- * Copyright (C) 2021 by Autonomous Driving Group, Shanghai AI Laboratory
+/* Copyright (C) 2021 by Autonomous Driving Group, Shanghai AI Laboratory
  * Limited. All rights reserved.
  * Yan Guohang <yanguohang@pjlab.org.cn>
  * Liu Zhuochun <liuzhuochun@pjlab.org.cn>
  */
+
 #include "Eigen/Core"
 #include "calibration_board.hpp"
 #include "logging.hpp"
@@ -43,10 +43,11 @@ int main(int argc, char **argv)
     std::string image_path = argv[1];
     std::string board_type = argv[2];
     cv::Mat image = cv::imread(image_path);
+    // cv::imshow("image", image);
     int type = stoi(board_type);
-    if (type < 0 && type > 4)
+    if (type < 0 || type > 4)
     {
-        LOGE("board type invalid, only support 0~4");
+        LOGE("Board type is invalid, only support 0~4!");
 
         return -1;
     }
@@ -54,11 +55,15 @@ int main(int argc, char **argv)
     // convert image to gray vector
     cv::Mat gray, gray_img;
     cv::cvtColor(image, gray, CV_BGR2GRAY);
+    // cv::imshow("gray", gray);
     gray.convertTo(gray_img, CV_32F);
+    // cv::imshow("gray_img", gray_img);
     std::vector<std::vector<float>> gray_vec;
     cvmat2stdvec(gray_img, gray_vec);
+    // cv::imshow("cvmat2stdvec gray_img", gray_img);
     bool display_img = true;
     bool sta = false;
+
     if (type == 0)
     {
         int board_center_point_x = 0;
@@ -73,6 +78,13 @@ int main(int argc, char **argv)
         sta = corner_detect.CornerDetection(
             gray_vec, &board_center_point_x, &board_center_point_y, &slope_point1,
             &slope_point2, &grid_x_dis, &grid_y_dis, &grid_center_points);
+        /*
+        for (size_t i = 0; i < grid_center_points.size(); ++i)
+        {
+            cout << "grid_center_points[" << i << "].x : " << grid_center_points[i].x << std::endl;
+            cout << "grid_center_points[" << i << "].y : " << grid_center_points[i].y << std::endl;
+        }
+        */
         LOGI("here");
         // display
         if (display_img && sta)
@@ -106,6 +118,7 @@ int main(int argc, char **argv)
         if (!v_board.check())
         {
             LOGE("wrong param");
+
             return false;
         }
         // corner detect
@@ -164,7 +177,9 @@ int main(int argc, char **argv)
                 {
                     Point2f pt = corners.points[i][j];
                     if (pt.x < 1)
+                    {
                         continue;
+                    }
                     cv::Point2f cv_pt;
                     cv::Point2f cv_pt_text;
                     cv_pt.x = pt.x;
@@ -173,8 +188,7 @@ int main(int argc, char **argv)
                     cv_pt_text.x += 10;
                     cv::Scalar color = color_box[j % 6];
                     cv::circle(display_img, cv_pt, 4, color, -1);
-                    cv::putText(display_img, std::to_string(i), cv_pt_text,
-                                cv::FONT_HERSHEY_SIMPLEX, 0.5, color);
+                    cv::putText(display_img, std::to_string(i), cv_pt_text, cv::FONT_HERSHEY_SIMPLEX, 0.5, color);
                 }
             }
             cv::imshow("circleboard", display_img);
@@ -221,12 +235,12 @@ int main(int argc, char **argv)
     else if (type == 4)
     {
         AprilTags::TagCodes m_tagCodes(AprilTags::tagCodes36h11);
-        AprilTags::TagDetector *m_tagDetector =
-            new AprilTags::TagDetector(m_tagCodes);
-        vector<AprilTags::TagDetection> detections =
-            m_tagDetector->extractTags(gray);
+        AprilTags::TagDetector *m_tagDetector = new AprilTags::TagDetector(m_tagCodes);
+        vector<AprilTags::TagDetection> detections = m_tagDetector->extractTags(gray);
         if (detections.size() == 36)
+        {
             sta = true;
+        }
         if (display_img && sta)
         {
             for (size_t i = 0; i < detections.size(); i++)
@@ -239,6 +253,11 @@ int main(int argc, char **argv)
             cv::imwrite("apriltags_detection.png", image);
         }
     }
+    else
+    {
+        std::cout << "No surpported type, please check it!" << std::endl;
+    }
+
     if (sta)
     {
         std::cout << "\nDetection Success!\n";

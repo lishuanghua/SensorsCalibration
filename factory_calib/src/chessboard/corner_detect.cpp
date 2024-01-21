@@ -5,6 +5,7 @@
  */
 
 #include "chessboard/corner_detect.hpp"
+#include <opencv2/opencv.hpp>
 
 double CornerDetect::CalculatePointDis(double x1, double y1, double x2, double y2)
 {
@@ -105,19 +106,19 @@ void CornerDetect::ClusterByRansac(
     sets->clear();
     while (true)
     {
-        int loop_times = points_set.size();
-        int maxVoteCnt = 0;
-        int initialValue = 0;
+        size_t loop_times = points_set.size();
+        size_t maxVoteCnt = 0;
+        size_t initialValue = 0;
         std::vector<Quad> get_points;
-        for (int i = 0; i < loop_times; i++)
+        for (size_t i = 0; i < loop_times; i++)
         {
-            int selectedIndex = initialValue % loop_times;
+            size_t selectedIndex = initialValue % loop_times;
             initialValue = initialValue + 1;
             Quad select_point = points_set[selectedIndex];
-            int voteCnt = 0;
+            size_t voteCnt = 0;
             std::vector<Quad> subPoint;
             subPoint.push_back(select_point);
-            for (int k = 0; k < loop_times; k++)
+            for (size_t k = 0; k < loop_times; k++)
             {
                 if (k == selectedIndex)
                 {
@@ -134,6 +135,7 @@ void CornerDetect::ClusterByRansac(
                     voteCnt++;
                 }
             }
+
             if (voteCnt > maxVoteCnt)
             {
                 maxVoteCnt = voteCnt;
@@ -144,6 +146,7 @@ void CornerDetect::ClusterByRansac(
                 }
             }
         }
+
         if (get_points.size() < 1)
         {
             break;
@@ -169,7 +172,7 @@ void CornerDetect::GetSlopPoint(const std::vector<Quad> &chess, Point *point)
 {
     double x = (chess[0].center.x + chess[1].center.x + chess[2].center.x) / 3;
     double y = (chess[0].center.y + chess[1].center.y + chess[2].center.y) / 3;
-    point->x = std::round(x);
+    point->x = std::round(x); // std::round(x)，对x进行四舍五入操作。
     point->y = std::round(y);
 }
 
@@ -243,10 +246,12 @@ void CornerDetect::GetGridDis(const std::vector<std::vector<Quad>> chess_sets, i
     {
         return;
     }
+
     if (gx_dis == nullptr || gy_dis == nullptr)
     {
         return;
     }
+
     std::vector<int> x_dis, y_dis;
     for (size_t i = 0; i < chess_sets[0].size(); i++)
     {
@@ -274,14 +279,17 @@ void CornerDetect::GetGridDis(const std::vector<std::vector<Quad>> chess_sets, i
     {
         sum_x += x_dis[i];
     }
+
     for (size_t i = 0; i < y_dis.size(); i++)
     {
         sum_y += y_dis[i];
     }
+
     if (x_dis.size() == 0 || y_dis.size() == 0)
     {
         return;
     }
+
     *gx_dis = std::round(sum_x / x_dis.size()) + 2;
     *gy_dis = std::round(sum_y / y_dis.size()) + 2;
 }
@@ -307,7 +315,7 @@ double CornerDetect::CalculateArea(const std::vector<Quad> &chess)
     double b = CalculatePointDis(p1.x, p1.y, p3.x, p3.y);
     double c = CalculatePointDis(p2.x, p2.y, p3.x, p3.y);
     double s = (a + b + c) / 2;
-    double area = std::sqrt(s * (s - a) * (s - b) * (s - c));
+    double area = std::sqrt(s * (s - a) * (s - b) * (s - c)); // 凯特公式，计算三角形面积的著名公式之一。
 
     return area;
 }
@@ -316,6 +324,7 @@ bool CornerDetect::CheckChessBoardArea(const std::vector<Quad> &first_chess, con
 {
     double first_area = CalculateArea(first_chess);
     double second_area = CalculateArea(second_chess);
+
     if (std::fabs(second_area) < 1e-6)
     {
         return false;
@@ -371,14 +380,17 @@ void CornerDetect::ImageThreshold(
     {
         return;
     }
+
     if (imgGray.size() == 0)
     {
         return;
     }
+
     if (edge_fill_percent > 0.29)
     {
         return;
     }
+
     int height = imgGray.size();
     int width = imgGray[0].size();
     int edge_fill_thickness_x = static_cast<int>(edge_fill_percent * height * 1.7);
@@ -410,14 +422,17 @@ void CornerDetect::EstimateGrayThres(
     {
         return;
     }
+
     if (imgGray.size() == 0)
     {
         return;
     }
+
     if (edge_fill_percent > 0.29)
     {
         return;
     }
+
     int height = imgGray.size();
     int width = imgGray[0].size();
     int edge_fill_thickness_x = static_cast<int>(edge_fill_percent * height * 1.7);
@@ -439,10 +454,12 @@ void CornerDetect::EstimateGrayThres(
             pixel_num++;
         }
     }
+
     for (int i = 0; i < 256; i++)
     {
         gray_prob[i] = gray_pixel_num[i] / static_cast<float>(pixel_num);
     }
+
     gray_distribution[0] = gray_prob[0];
     for (int i = 1; i < 256; i++)
     {
@@ -472,6 +489,7 @@ void CornerDetect::EstimateGrayThres(
     {
         stride = stride * (-1);
     }
+
     if (aver_gray < 127.5 && (mid_gray - aver_gray) > 0)
     {
         stride = stride * (-1);
@@ -486,6 +504,7 @@ void CornerDetect::EstimateGrayThres(
         {
             break;
         }
+
         if (possible_box[i - 1] + stride >= 255 || possible_box[i - 1] + stride < 0)
         {
             possible_box.push_back(start_thres - 2 * stride);
@@ -517,10 +536,12 @@ void CornerDetect::ImageDilate(
     {
         return;
     }
+
     if (edge_fill_percent > 0.29)
     {
         return;
     }
+
     *dilation_vec = thresh_vec;
     int nTemp;
     for (int i = 0; i < 2; i++)
@@ -549,6 +570,7 @@ void CornerDetect::ImageDilate(
                         {
                             continue;
                         }
+
                         if (kernal[k][l] == 1)
                         {
                             (*dilation_vec)[i - 1 + k][j - 1 + l] = 255;
@@ -570,6 +592,7 @@ double CornerDetect::CalculateContourArea(std::vector<Point> contour)
     {
         return 0;
     }
+
     double a00 = 0;
     int contour_size = contour.size();
     Point2f prev = Point2f(static_cast<float>(contour[contour_size - 1].x), static_cast<float>(contour[contour_size - 1].y));
@@ -592,6 +615,7 @@ std::vector<Point> CornerDetect::DepthFirstSearch(std::vector<std::vector<int>> 
     {
         return temp;
     }
+
     std::stack<Point> S;
     S.push(Point(i, j));
     (*img)[i][j] = 0;
@@ -641,10 +665,12 @@ void CornerDetect::FindContours(
     {
         return;
     }
+
     if (edge_fill_percent > 0.29)
     {
         return;
     }
+
     std::vector<std::vector<int>> img = dilation_vec;
     int edge_fill_thickness_x = static_cast<int>(edge_fill_percent * dilation_vec.size() * 1.7);
     int edge_fill_thickness_y = static_cast<int>(edge_fill_percent * dilation_vec[0].size());
@@ -664,6 +690,7 @@ void CornerDetect::FindContours(
             }
         }
     }
+
     std::vector<std::vector<int>> img_tmp = img;
     for (size_t i = 1; i < img.size() - 1; i++)
     {
@@ -676,6 +703,7 @@ void CornerDetect::FindContours(
             }
         }
     }
+
     std::vector<Point> temp;
     for (size_t i = 1; i < img_tmp.size() - 1; i++)
     {
@@ -693,6 +721,7 @@ void CornerDetect::FindContours(
     }
 }
 
+// 拟合多边形，cv中有同名的函数
 void CornerDetect::ApproxPolyDP(const std::vector<Point> src_contour, double eps, std::vector<Point> *rt_contour)
 {
     if (rt_contour == nullptr)
@@ -708,10 +737,11 @@ void CornerDetect::ApproxPolyDP(const std::vector<Point> src_contour, double eps
     pt = src_contour[pos]; \
     if (++pos >= count)    \
     pos = 0
+
     std::vector<Point> dst_contour;
     Point slice(0, 0);
     Point right_slice(0, 0);
-    int count = src_contour.size();
+    size_t count = src_contour.size();
     int init_iters = 3;
     int i = 0, j, pos = 0, wpos, new_count = 0;
     bool le_eps = false;
@@ -721,6 +751,7 @@ void CornerDetect::ApproxPolyDP(const std::vector<Point> src_contour, double eps
     std::stack<Point> s;
     eps *= eps;
     right_slice.x = 0;
+
     for (i = 0; i < init_iters; i++)
     {
         double max_dist = 0;
@@ -742,6 +773,7 @@ void CornerDetect::ApproxPolyDP(const std::vector<Point> src_contour, double eps
         }
         le_eps = max_dist <= eps;
     }
+
     if (!le_eps)
     {
         right_slice.y = slice.x = pos % count;
@@ -798,6 +830,7 @@ void CornerDetect::ApproxPolyDP(const std::vector<Point> src_contour, double eps
             s.push(slice);
         }
     }
+
     count = new_count;
     pos = count - 1;
     READ_DST_PT(start_pt, pos);
@@ -825,6 +858,7 @@ void CornerDetect::ApproxPolyDP(const std::vector<Point> src_contour, double eps
             continue;
         }
         dst_contour[wpos] = start_pt = pt;
+
         if (++wpos >= count)
         {
             wpos = 0;
@@ -847,18 +881,23 @@ bool CornerDetect::CornerDetection(
     int *grid_x_dis, int *grid_y_dis,
     std::vector<Point> *grid_center_points)
 {
+    std::cout << "Enter in bool CornerDetect::CornerDetection() fuction" << std::endl;
+
     if (vp_x == nullptr || vp_y == nullptr)
     {
         return false;
     }
+
     if (sp1 == nullptr || sp2 == nullptr)
     {
         return false;
     }
+
     if (grid_x_dis == nullptr || grid_y_dis == nullptr)
     {
         return false;
     }
+
     if (grid_center_points == nullptr)
     {
         return false;
@@ -872,16 +911,35 @@ bool CornerDetect::CornerDetection(
     std::vector<std::vector<Quad>> final_chess_sets;
     // int edge_fill_thickness = 300;
     float edge_fill_percent = 0.05;
+    std::cout << "original edge_fill_percent : " << edge_fill_percent << std::endl;
+
     float grid_area_thres = static_cast<float>(imgGray.size() * imgGray[0].size()) / 4000;
+    std::cout << "imgGray.size() = " << imgGray.size() << std::endl;
+    std::cout << "imgGray[0].size() = " << imgGray[0].size() << std::endl;
+    std::cout << "grid_area_thres = " << grid_area_thres << std::endl;
+
     std::vector<int> thres_box;
+    // 对图片做二值化，区分黑白
+    // cv::imshow("Before", imgGray);
     EstimateGrayThres(imgGray, &thres_box, edge_fill_percent);
+    std::cout << "thres_box:\n";
+    for (size_t i = 0; i < thres_box.size(); i++)
+    {
+        std::cout << thres_box[i] << " ";
+    }
+    std::cout << std::endl;
+    // cv::imshow("After", imgGray);
+    std::cout << "final edge_fill_percent : " << edge_fill_percent << std::endl;
 
     for (size_t thres_idx = 0; thres_idx < thres_box.size(); thres_idx += 1)
     {
         int thresh_threshold = thres_box[thres_idx];
+        // 图像二值化、去噪，OpenCV中对应的函数为cv::threshold()。
         ImageThreshold(imgGray, thresh_threshold, &thresh_vec, edge_fill_percent);
+        // 图像膨胀、扩张，OpenCV中对应的函数为cv::dilate()。
         ImageDilate(thresh_vec, kernal, &dilation_vec, edge_fill_percent);
         std::vector<std::vector<Point>> contours;
+        // 在二值图像（binary image）中寻找轮廓（contour），在OpenCV中对应的函数为cv::findContours()。
         FindContours(dilation_vec, &contours, edge_fill_percent);
         std::vector<Quad> approx_contour_points;
         float area_sum = 0;
@@ -891,6 +949,7 @@ bool CornerDetect::CornerDetection(
             std::vector<Point> approx_contour;
             for (int approx_level = 1; approx_level < 8; approx_level++)
             {
+                // 把一个连续光滑曲线折线化，对图像轮廓点进行多边形拟合，OpenCV中对应的函数为cv::approxPolyDP()。
                 ApproxPolyDP(contour, static_cast<double>(approx_level), &approx_contour);
                 if (approx_contour.size() == 4)
                 {
@@ -908,16 +967,22 @@ bool CornerDetect::CornerDetection(
             {
                 continue;
             }
+
+            // cv::contourArea()主要用于计算图像轮廓的面积，通常搭配findContours()函数使用。
             double area = CalculateContourArea(approx_contour);
             // if (area < 400) continue;
             if (area < grid_area_thres)
             {
                 continue;
             }
+
+            // 判断其是否是长方形
             if (!IsRectangle(approx_contour))
             {
                 continue;
             }
+
+            // 判断其是否是正方形
             if (!IsSquare(approx_contour))
             {
                 continue;
@@ -950,6 +1015,8 @@ bool CornerDetect::CornerDetection(
         {
             std::vector<std::vector<Quad>> sets;
             double cluster_dis_threshold = static_cast<double>((approx_dis_thre) * 1.4 + base_value); // 20
+
+            // 聚类，把最近的三个点聚在一起，6个点分成两个三角形
             ClusterByRansac(approx_contour_points, approx_dis_thre * 0.8, cluster_dis_threshold, &sets);
             std::vector<std::vector<Quad>> valid_sets;
             for (size_t i = 0; i < sets.size(); i++)
@@ -958,22 +1025,29 @@ bool CornerDetect::CornerDetection(
                 {
                     continue;
                 }
+
+                // 判断是否为等腰三角形
                 if (!IsIsoscelesTriangle(sets[i]))
                 {
                     continue;
                 }
+
+                // 判断是否是直角三角形
                 if (!IsRightTriangle(sets[i]))
                 {
                     continue;
                 }
                 valid_sets.push_back(sets[i]);
             }
+
             if (valid_sets.size() < 2)
             {
                 continue;
             }
             std::vector<Quad> valid_Chessboard1;
             std::vector<Quad> valid_Chessboard2;
+
+            // 检测坡度是否过大
             bool check_success = CheckChessboard(valid_sets, &valid_Chessboard1, &valid_Chessboard2);
             if (check_success)
             {
@@ -983,6 +1057,7 @@ bool CornerDetect::CornerDetection(
                 break;
             }
         }
+
         if (final_chess_sets.size() == 2)
         {
             std::cout << "Success thresh_threshold: " << thresh_threshold << std::endl;
@@ -1033,6 +1108,7 @@ bool CornerDetect::CornerDetection(
             corner_count++;
         }
     }
+
     if (is_detection_success)
     {
         int vanishing_point_x = std::round(corner_point_x / corner_count);
@@ -1052,6 +1128,8 @@ bool CornerDetect::CornerDetection(
         *grid_x_dis = gx_dis;
         *grid_y_dis = gy_dis;
     }
+
+    std::cout << "Leave out bool CornerDetect::CornerDetection() fuction" << std::endl;
 
     return is_detection_success;
 }
