@@ -38,6 +38,10 @@ namespace cameracalib
                 lines.emplace_back(std::vector<int>({1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}));
                 lines.emplace_back(std::vector<int>({0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0}));
             }
+            else
+            {
+                std::cout << "Error! No supported type, please check it!" << std::endl;
+            }
             num = 3;
         }
 

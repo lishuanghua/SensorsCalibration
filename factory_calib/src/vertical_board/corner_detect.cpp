@@ -22,6 +22,7 @@ namespace cameracalib
         {
             // set calibration line pattern
             line_pattern_ = lp;
+
             // corner detection parameters
             int max_corners = 500;
             double quality_level = 0.03;
@@ -29,11 +30,14 @@ namespace cameracalib
 
             std::vector<Eigen::Vector2d> corner_pts;
             std::vector<Point2f> corners;
+
+            // 根据梯度检测角点
             KeypointDetector point_detector(max_corners, quality_level, min_distance);
             if (!point_detector.detect(gray_img, &corners))
             {
                 return false;
             }
+
             for (size_t i = 0; i < corners.size(); ++i)
             {
                 corner_pts.emplace_back(Eigen::Vector2d(corners[i].x, corners[i].y));
@@ -257,6 +261,7 @@ namespace cameracalib
                     }
                 }
             }
+
             if (left_right_idxs->size() == 0)
             {
                 return false;
@@ -358,8 +363,9 @@ namespace cameracalib
                     // found possible start and end pos of calibration line
                     std::vector<std::vector<int>> current_pattern_idxs;
                     int current_point_num = 0;
-                    if (this->checkProjectLinePattern(grid_dist_vec, rough_points_line_idx, s_idx, e_idx,
-                                                      &current_pattern_idxs, &current_point_num))
+                    if (this->checkProjectLinePattern(
+                            grid_dist_vec, rough_points_line_idx, s_idx, e_idx,
+                            &current_pattern_idxs, &current_point_num))
                     {
                         if (current_point_num > max_point_num)
                         {

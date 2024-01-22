@@ -304,10 +304,11 @@ public:
      *     segment length vector: [9, 3, 6]
      *     segment mean dist: 30.3,30,30.2
      **/
-    void equidistanceCluster(std::vector<Eigen::Vector2i> *segment_pos,
-                             std::vector<int> *segment_length,
-                             std::vector<double> *segment_dists,
-                             double pts_dist_th = 0.5)
+    void equidistanceCluster(
+        std::vector<Eigen::Vector2i> *segment_pos,
+        std::vector<int> *segment_length,
+        std::vector<double> *segment_dists,
+        double pts_dist_th = 0.5)
     {
         if (!sorted_)
         {

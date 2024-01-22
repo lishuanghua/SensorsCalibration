@@ -43,6 +43,7 @@ namespace cameracalib
 
         private:
             void displayDetectedLines(const cv::Mat &img, const std::vector<std::shared_ptr<LineModel>> &line_models);
+
             // based on realtion between lines to select specific lines
             // find three clustered lines (left, middle, right)
             // project left and right line point on middle line to find joint point
