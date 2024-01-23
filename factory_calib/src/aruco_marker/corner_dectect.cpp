@@ -77,6 +77,7 @@ namespace cameracalib
                         break;
                     }
                 }
+
                 if (pts.points.size() >= (size_t)min_detected_marker_num_)
                 {
                     *corner_pts = pts;
@@ -281,14 +282,17 @@ namespace cameracalib
             {
                 return;
             }
+
             if (imgGray.size() == 0)
             {
                 return;
             }
+
             if (edge_fill_percent > 0.29)
             {
                 return;
             }
+
             size_t height = imgGray.size();
             size_t width = imgGray[0].size();
             int edge_fill_thickness_x = static_cast<int>(edge_fill_percent * height * 1.7);
@@ -310,6 +314,7 @@ namespace cameracalib
                     pixel_num++;
                 }
             }
+
             for (int i = 0; i < 256; i++)
             {
                 gray_prob[i] = gray_pixel_num[i] / static_cast<float>(pixel_num);
@@ -343,6 +348,7 @@ namespace cameracalib
             {
                 stride = stride * (-1);
             }
+
             if (aver_gray < 127.5 && (mid_gray - aver_gray) > 0)
             {
                 stride = stride * (-1);
@@ -357,6 +363,7 @@ namespace cameracalib
                 {
                     break;
                 }
+
                 if (possible_box[i - 1] + stride >= 255 || possible_box[i - 1] + stride < 0)
                 {
                     possible_box.push_back(start_thres - 2 * stride);
@@ -391,14 +398,17 @@ namespace cameracalib
             {
                 return;
             }
+
             if (imgGray.size() == 0)
             {
                 return;
             }
+
             if (edge_fill_percent > 0.29)
             {
                 return;
             }
+
             size_t height = imgGray.size();
             size_t width = imgGray[0].size();
             int edge_fill_thickness_x = static_cast<int>(edge_fill_percent * height * 1.7);
@@ -431,10 +441,12 @@ namespace cameracalib
             {
                 return;
             }
+
             if (edge_fill_percent > 0.29)
             {
                 return;
             }
+
             std::vector<std::vector<bool>> img = dilation_vec;
             int edge_fill_thickness_x = static_cast<int>(edge_fill_percent * dilation_vec.size() * 1.7);
             int edge_fill_thickness_y = static_cast<int>(edge_fill_percent * dilation_vec[0].size());
@@ -504,10 +516,12 @@ namespace cameracalib
                         break;
                     }
                 }
+
                 if (approxCurve.size() != 4)
                 {
                     continue;
                 }
+
                 if (!isContourConvex(approxCurve))
                 {
                     continue;
@@ -538,6 +552,7 @@ namespace cameracalib
                         approxCurve[j].y > _in.size() - 1 - minDistanceToBorder)
                         tooNearBorder = true;
                 }
+
                 if (tooNearBorder)
                 {
                     continue;
@@ -615,6 +630,7 @@ namespace cameracalib
                 }
                 le_eps = max_dist <= eps;
             }
+
             if (!le_eps)
             {
                 right_slice.y = slice.x = pos % count;
@@ -658,6 +674,7 @@ namespace cameracalib
                     le_eps = true;
                     start_pt = src_contour[slice.x];
                 }
+
                 if (le_eps)
                 {
                     dst_contour.push_back(start_pt);
@@ -965,6 +982,7 @@ namespace cameracalib
                         cnt++;
                     }
                 }
+
                 if (cnt > max_cnt)
                 {
                     max_cnt = cnt;
@@ -978,6 +996,7 @@ namespace cameracalib
                         cnt++;
                     }
                 }
+
                 if (cnt > max_cnt)
                 {
                     max_cnt = cnt;
@@ -991,6 +1010,7 @@ namespace cameracalib
                         cnt++;
                     }
                 }
+
                 if (cnt > max_cnt)
                 {
                     max_cnt = cnt;
@@ -1004,12 +1024,14 @@ namespace cameracalib
                         cnt++;
                     }
                 }
+
                 if (cnt > max_cnt)
                 {
                     max_cnt = cnt;
                     ID = i;
                 }
             }
+
             if (max_cnt < 12)
             {
                 return -1;
@@ -1057,19 +1079,23 @@ namespace cameracalib
                 {
                     left = _corners[i].x;
                 }
+
                 if (_corners[i].x > right)
                 {
                     right = _corners[i].x;
                 }
+
                 if (_corners[i].y < top)
                 {
                     top = _corners[i].y;
                 }
+
                 if (_corners[i].y > bottom)
                 {
                     bottom = _corners[i].y;
                 }
             }
+
             if (right - left < resultImgSize || bottom - top < resultImgSize)
             {
                 return -1;
@@ -1117,6 +1143,7 @@ namespace cameracalib
                             }
                         }
                     }
+
                     if (white > black)
                     {
                         all_white++;
@@ -1127,6 +1154,7 @@ namespace cameracalib
                         all_black++;
                         ID_detect.emplace_back(0);
                     }
+
                     if (float(white) / (cellSize_row) / (cellSize_col) > 0.3 &&
                         float(white) / (cellSize_row) / (cellSize_col) < 0.7)
                     {

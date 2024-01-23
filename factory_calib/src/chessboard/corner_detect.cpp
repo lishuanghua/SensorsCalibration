@@ -1016,7 +1016,7 @@ bool CornerDetect::CornerDetection(
             std::vector<std::vector<Quad>> sets;
             double cluster_dis_threshold = static_cast<double>((approx_dis_thre) * 1.4 + base_value); // 20
 
-            // 聚类，把最近的三个点聚在一起，6个点分成两个三角形
+            // 聚类，把最近的三个点聚在一起，6个点分成两个三角形，OpenCV中的对应函数疑似findHomography？
             ClusterByRansac(approx_contour_points, approx_dis_thre * 0.8, cluster_dis_threshold, &sets);
             std::vector<std::vector<Quad>> valid_sets;
             for (size_t i = 0; i < sets.size(); i++)

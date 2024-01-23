@@ -24,11 +24,13 @@ namespace cameracalib
             {
                 return false;
             }
+
             int img_w = gray_img[0].size();
             if (img_w < 1)
             {
                 return false;
             }
+
             CircleDetector circle_detector;
             circle_detector.generateParam(img_w, img_h);
             min_line_dist_ = circle_detector.min_radius_ * 4;
@@ -88,6 +90,7 @@ namespace cameracalib
                     pixel_num++;
                 }
             }
+
             for (int i = 0; i < 256; i++)
             {
                 gray_prob[i] = gray_pixel_num[i] / static_cast<float>(pixel_num);
