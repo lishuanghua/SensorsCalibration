@@ -534,6 +534,7 @@ struct ZCostFunctorPnP
                 extrin(i, j) += rr(i, j);
             }
         }
+
         for (int i = 0; i < 3; i++)
         {
             extrin(i, i) += cos(theta);
@@ -665,6 +666,7 @@ bool solveCamPnP(
     tvec[0] = tra[0];
     tvec[1] = tra[1];
     tvec[2] = tra[2];
+    
     return true;
 }
 

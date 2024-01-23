@@ -58,6 +58,7 @@ namespace cameracalib
         if (!is_success)
         {
             LOGE("failed to detect corners");
+
             return false;
         }
         // display
@@ -254,8 +255,10 @@ namespace cameracalib
         if (calibration_result == nullptr)
         {
             LOGE("wrong param");
+
             return false;
         }
+
         // copy input param to base calibration param struct
         base_input_param_.camera_height = calibration_inputs.camera_height;
         base_input_param_.camera_lateral_offset = calibration_inputs.camera_lateral_offset;
@@ -269,6 +272,7 @@ namespace cameracalib
         VerticalBoard v_board;
         v_board.set(calibration_inputs.calibration_board_type);
         std::cout << "board type: " << calibration_inputs.calibration_board_type << std::endl;
+
         // check board pattern
         if (!v_board.check())
         {
@@ -289,6 +293,7 @@ namespace cameracalib
 
             return false;
         }
+
         // display
         if (display_img_)
         {
@@ -352,6 +357,7 @@ namespace cameracalib
                 img_quad.emplace_back(Point2float(img_x, img_y));
             }
         }
+
         // compute image to board homography
         float expected_symmetric_distance = 0.02;
         bool homography_flag = CeresSolveHomography(img_quad, board_quad, expected_symmetric_distance, &img2board_hmat);
@@ -531,6 +537,7 @@ namespace cameracalib
                 }
             }
         }
+
         // compute image to board homography
         float expected_symmetric_distance = 0.02;
         bool homography_flag = CeresSolveHomography(img_quad, board_quad, expected_symmetric_distance, &img2board_hmat);
@@ -607,6 +614,7 @@ namespace cameracalib
 
             return false;
         }
+
         // copy input param to base calibration param struct
         base_input_param_.camera_height = calibration_inputs.camera_height;
         base_input_param_.camera_lateral_offset = calibration_inputs.camera_lateral_offset;
@@ -636,6 +644,7 @@ namespace cameracalib
 
             return false;
         }
+
         // display
         if (display_img_)
         {
@@ -674,11 +683,13 @@ namespace cameracalib
         const std::string &output_json_path)
     {
         output_dir_ = output_json_path;
+
         /* check and create output directory of Calibration result */
         if (output_dir_.rfind('/') != output_dir_.size() - 1)
         {
             output_dir_ = output_dir_ + "/";
         }
+
         if (opendir(output_dir_.c_str()) == nullptr)
         {
             char command[1024];
@@ -688,6 +699,7 @@ namespace cameracalib
                 printf("Create dir: %s\n", output_dir_.c_str());
             }
         }
+
         // three calibration json files
         std::string calibration_json_path = output_dir_ + "front_center_camera-calibration.json";
         std::string extrinsic_json_path = output_dir_ + "front_center_camera-to-car_center-extrinsic.json";
@@ -697,10 +709,12 @@ namespace cameracalib
         {
             std::cerr << "[ADAS CALIB]Write calibration json file fail!" << std::endl;
         }
+
         if (!this->SaveJsonExtrinsic(calibration_result, extrinsic_json_path))
         {
             std::cerr << "[ADAS CALIB]Write extrinsic json file fail!" << std::endl;
         }
+
         if (!this->SaveJsonIntrinsic(calibration_result, intrinsic_json_path))
         {
             std::cerr << "[ADAS CALIB]Write intrinsic json file fail!" << std::endl;

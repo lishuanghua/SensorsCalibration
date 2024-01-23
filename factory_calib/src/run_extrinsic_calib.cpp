@@ -33,6 +33,7 @@ int main(int argc, char **argv)
 
     bool detection_success = true;
     bool real_data = false;
+
     // Camera to Car extrinsic
     if (detection_success && real_data)
     {
@@ -43,13 +44,14 @@ int main(int argc, char **argv)
         std::vector<float> rvec, tvec;                            // calibration result
         solveCamPnP(obj_pts, pts2d, intrinsic, dist, rvec, tvec); // solver
     }
+
     // LiDAR to Car extrinsic
     if (detection_success && real_data)
     {
         std::vector<std::vector<float>> lidar_pts;     // detected lidar points
         std::vector<std::vector<float>> obj_pts;       // coordinates in the car coordinate system
         std::vector<float> rvec, tvec;                 // calibration result
-        solveLidarPnP(obj_pts, lidar_pts, rvec, tvec); // solversolver
+        solveLidarPnP(obj_pts, lidar_pts, rvec, tvec); // solver
     }
 
     return 0;

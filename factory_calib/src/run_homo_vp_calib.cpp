@@ -37,17 +37,19 @@ int main(int argc, char **argv)
     std::string output_dir = argv[3];
     cv::Mat image = cv::imread(image_path);
     int type = stoi(board_type);
-    if (type < 0 && type > 3)
+    if (type < 0 || type > 3)
     {
-        LOGE("board type invalid, only support 0~4");
+        LOGE("board type invalid, only support 0~3");
 
         return -1;
     }
+
     // creat output dir
     if (output_dir.rfind('/') != output_dir.size() - 1)
     {
         output_dir = output_dir + "/";
     }
+
     if (opendir(output_dir.c_str()) == nullptr)
     {
         char command[1024];
@@ -57,6 +59,7 @@ int main(int argc, char **argv)
             printf("Create dir: %s\n", output_dir.c_str());
         }
     }
+
     // convert image to gray vector
     cv::Mat gray, gray_img;
     cv::cvtColor(image, gray, CV_BGR2GRAY);
@@ -96,6 +99,7 @@ int main(int argc, char **argv)
     {
         sta = calibrator.ArucoMarkerBoardCalibration(gray_vec, params, output_dir, &outputs);
     }
+
     if (sta)
     {
         std::cout << "\nCalibration Success!\n";

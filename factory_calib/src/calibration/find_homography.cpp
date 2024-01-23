@@ -68,6 +68,7 @@ inline bool Homography2DFromCorrespondencesLinearEuc(const MatXd &x1, const MatX
         // std::cout<< "Size not consistent!"<<std::endl;
         return false;
     }
+
     int n = x1.cols();
     MatX8d L = MatXd::Zero(n * 3, 8);
     MatXd b = MatXd::Zero(n * 3, 1);
@@ -143,7 +144,10 @@ ceres::CallbackReturnType TerminationCheckingCallback::operator()(const ceres::I
 }
 
 inline bool EstimateHomography2DFromCorrespondences(
-    const MatXd &x1, const MatXd &x2, const EstimateHomographyOptions &options, Mat3d *h_mat)
+    const MatXd &x1,
+    const MatXd &x2,
+    const EstimateHomographyOptions &options,
+    Mat3d *h_mat)
 {
     if (2 != x1.rows() || 4 > x1.cols() || x1.rows() != x2.rows() || x1.cols() != x2.cols())
     {
@@ -185,10 +189,11 @@ inline bool EstimateHomography2DFromCorrespondences(
     return summary.IsSolutionUsable();
 }
 
-bool CeresSolveHomography(const std::vector<Point2float> &src_quad,
-                          const std::vector<Point2float> &dst_quad,
-                          const double expected_symmetric_distance,
-                          Mat3d *h_mat)
+bool CeresSolveHomography(
+    const std::vector<Point2float> &src_quad,
+    const std::vector<Point2float> &dst_quad,
+    const double expected_symmetric_distance,
+    Mat3d *h_mat)
 {
     if (nullptr == h_mat)
     {
