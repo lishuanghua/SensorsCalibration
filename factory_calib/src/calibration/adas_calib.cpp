@@ -21,7 +21,6 @@
 
 namespace cameracalib
 {
-
     bool CalibrationBoardTool::ChessBoardCalibration(
         const std::vector<std::vector<float>> &gray_img,
         const InputParam &calibration_inputs,
@@ -61,6 +60,7 @@ namespace cameracalib
 
             return false;
         }
+
         // display
         if (display_img_)
         {
@@ -171,11 +171,11 @@ namespace cameracalib
         std::vector<Point2float> world_quad_ground;
 
         // prepare A,B point in the image
-
         Vec3 pA = homo_mat.inverse() * Vec3(pA_chessboard.x, pA_chessboard.y, 1);
         if (pA(2, 0) == 0)
         {
             LOGE("wrong param");
+
             return false;
         }
         pA /= pA(2, 0);
@@ -206,6 +206,7 @@ namespace cameracalib
         if (camera_height == 0)
         {
             LOGE("wrong param");
+
             return false;
         }
         float camera_fy_a = (camera_to_board_distance) * (pA(1, 0) - vanishing_point(1, 0)) / camera_height;
@@ -215,6 +216,7 @@ namespace cameracalib
             std::fabs(pB_mid_img.y - vanishing_point(1, 0)) < 1e-6)
         {
             LOGE("wrong param");
+
             return false;
         }
         pA_mid_ground.x = camera_height * camera_fy / (pA_mid_img.y - vanishing_point(1, 0)) + camera_vertical_offset;
@@ -229,6 +231,7 @@ namespace cameracalib
         if (!homography_flag)
         {
             LOGE("failed to compute homography");
+
             return false;
         }
 
@@ -393,6 +396,7 @@ namespace cameracalib
                 float gd_y = b * y_ground_gap;
                 float img_y = camera_height * fy / (gd_x - cam_v_offset) + vp(1);
                 float img_x = vp(0) - fx / (gd_x - cam_v_offset) * (gd_y - cam_l_offset);
+
                 // roll adjustment
                 float new_img_x, new_img_y;
                 float x2vp_x = img_x - vp(0);
@@ -574,6 +578,7 @@ namespace cameracalib
                 float gd_y = b * y_ground_gap;
                 float img_y = camera_height * fy / (gd_x - cam_v_offset) + vp(1);
                 float img_x = vp(0) - fx / (gd_x - cam_v_offset) * (gd_y - cam_l_offset);
+
                 // roll adjustment
                 float new_img_x, new_img_y;
                 float x2vp_x = img_x - vp(0);

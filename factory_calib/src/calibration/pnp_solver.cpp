@@ -8,16 +8,18 @@
 #include "calibration/find_homography.hpp"
 #include <iostream>
 
-bool solvePnPbyDLT(const Eigen::Matrix3d &K,
-                   const std::vector<Eigen::Vector3d> &pts3d,
-                   const std::vector<Eigen::Vector2d> &pts2d,
-                   Eigen::Matrix3d *R,
-                   Eigen::Vector3d *t)
+bool solvePnPbyDLT(
+    const Eigen::Matrix3d &K,
+    const std::vector<Eigen::Vector3d> &pts3d,
+    const std::vector<Eigen::Vector2d> &pts2d,
+    Eigen::Matrix3d *R,
+    Eigen::Vector3d *t)
 {
     if (R == nullptr || t == nullptr)
     {
         return false;
     }
+
     // Check input
     if (pts3d.size() != pts2d.size() || pts3d.size() < 6)
     {
@@ -142,16 +144,18 @@ bool solvePnPbyDLT(const Eigen::Matrix3d &K,
  * **************** EPnP ******************
  * ****************************************/
 
-bool solvePnPbyEPnP(const Eigen::Matrix3d &K,
-                    const std::vector<Eigen::Vector3d> &pts3d,
-                    const std::vector<Eigen::Vector2d> &pts2d,
-                    Eigen::Matrix3d *R,
-                    Eigen::Vector3d *t)
+bool solvePnPbyEPnP(
+    const Eigen::Matrix3d &K,
+    const std::vector<Eigen::Vector3d> &pts3d,
+    const std::vector<Eigen::Vector2d> &pts2d,
+    Eigen::Matrix3d *R,
+    Eigen::Vector3d *t)
 {
     if (R == nullptr || t == nullptr)
     {
         return false;
     }
+
     // Check input data.
     if (pts2d.size() < 4 || pts2d.size() != pts3d.size())
     {
@@ -185,34 +189,33 @@ bool solvePnPbyEPnP(const Eigen::Matrix3d &K,
     Eigen::Matrix3d tmp_R;
     Eigen::Vector3d tmp_t;
 
-    {
-        solveBetaN2(eigen_vectors, L, rho, &betas);
-        optimizeBeta(L, rho, &betas);
+    solveBetaN2(eigen_vectors, L, rho, &betas);
+    optimizeBeta(L, rho, &betas);
 
-        std::vector<Eigen::Vector3d> camera_control_points;
-        computeCameraControlPoints(eigen_vectors, betas, &camera_control_points);
+    std::vector<Eigen::Vector3d> camera_control_points;
+    computeCameraControlPoints(eigen_vectors, betas, &camera_control_points);
 
-        std::vector<Eigen::Vector3d> pts3d_camera;
-        rebuiltPts3dCamera(camera_control_points, hb_coordinates, &pts3d_camera);
+    std::vector<Eigen::Vector3d> pts3d_camera;
+    rebuiltPts3dCamera(camera_control_points, hb_coordinates, &pts3d_camera);
 
-        computeRt(pts3d_camera, pts3d, &tmp_R, &tmp_t);
-    }
+    computeRt(pts3d_camera, pts3d, &tmp_R, &tmp_t);
+
     double err2 = reprojectionError(K, pts3d, pts2d, tmp_R, tmp_t);
     *R = tmp_R;
     *t = tmp_t;
+
     // Case N = 3.
-    {
-        solveBetaN3(eigen_vectors, L, rho, &betas);
-        optimizeBeta(L, rho, &betas);
+    solveBetaN3(eigen_vectors, L, rho, &betas);
+    optimizeBeta(L, rho, &betas);
 
-        std::vector<Eigen::Vector3d> camera_control_points;
-        computeCameraControlPoints(eigen_vectors, betas, &camera_control_points);
+    std::vector<Eigen::Vector3d> camera_control_points;
+    computeCameraControlPoints(eigen_vectors, betas, &camera_control_points);
 
-        std::vector<Eigen::Vector3d> pts3d_camera;
-        rebuiltPts3dCamera(camera_control_points, hb_coordinates, &pts3d_camera);
+    std::vector<Eigen::Vector3d> pts3d_camera;
+    rebuiltPts3dCamera(camera_control_points, hb_coordinates, &pts3d_camera);
 
-        computeRt(pts3d_camera, pts3d, &tmp_R, &tmp_t);
-    }
+    computeRt(pts3d_camera, pts3d, &tmp_R, &tmp_t);
+
     double err3 = reprojectionError(K, pts3d, pts2d, tmp_R, tmp_t);
     if (err3 < err2)
     {
@@ -225,18 +228,17 @@ bool solvePnPbyEPnP(const Eigen::Matrix3d &K,
     }
 
     // Case N = 4.
-    {
-        solveBetaN4(eigen_vectors, L, rho, &betas);
-        optimizeBeta(L, rho, &betas);
+    solveBetaN4(eigen_vectors, L, rho, &betas);
+    optimizeBeta(L, rho, &betas);
 
-        std::vector<Eigen::Vector3d> camera_control_points;
-        computeCameraControlPoints(eigen_vectors, betas, &camera_control_points);
+    std::vector<Eigen::Vector3d> camera_control_points;
+    computeCameraControlPoints(eigen_vectors, betas, &camera_control_points);
 
-        std::vector<Eigen::Vector3d> pts3d_camera;
-        rebuiltPts3dCamera(camera_control_points, hb_coordinates, &pts3d_camera);
+    std::vector<Eigen::Vector3d> pts3d_camera;
+    rebuiltPts3dCamera(camera_control_points, hb_coordinates, &pts3d_camera);
 
-        computeRt(pts3d_camera, pts3d, &tmp_R, &tmp_t);
-    }
+    computeRt(pts3d_camera, pts3d, &tmp_R, &tmp_t);
+
     double err4 = reprojectionError(K, pts3d, pts2d, tmp_R, tmp_t);
     if (err4 < err3)
     {
@@ -251,21 +253,24 @@ bool solvePnPbyEPnP(const Eigen::Matrix3d &K,
  * **************** Iter ******************
  * ****************************************/
 
-bool solvePnPbyIterative(const Eigen::Matrix3d &K,
-                         const std::vector<Eigen::Vector3d> &pts3d,
-                         const std::vector<Eigen::Vector2d> &pts2d,
-                         Eigen::Matrix3d *R,
-                         Eigen::Vector3d *t)
+bool solvePnPbyIterative(
+    const Eigen::Matrix3d &K,
+    const std::vector<Eigen::Vector3d> &pts3d,
+    const std::vector<Eigen::Vector2d> &pts2d,
+    Eigen::Matrix3d *R,
+    Eigen::Vector3d *t)
 {
     if (R == nullptr || t == nullptr)
     {
         return false;
     }
+
     // Check input data.
     if (pts2d.size() < 4 || pts2d.size() != pts3d.size())
     {
         return false;
     }
+
     size_t count = pts3d.size();
     // std::cout<<"begin solve"<<std::endl;
     // convert image and world point to homogenous coordinate
@@ -294,6 +299,7 @@ bool solvePnPbyIterative(const Eigen::Matrix3d &K,
         {
             *R_transform = Eigen::Matrix3d::Identity();
         }
+
         if ((*R_transform).determinant() < 0)
         {
             *R_transform = -(*R_transform);
@@ -395,8 +401,10 @@ struct YCostFunctorPnP
         point_in[0] = T(lidar_point_[0]);
         point_in[1] = T(lidar_point_[1]);
         point_in[2] = T(lidar_point_[2]);
+
         // rotation
         ceres::AngleAxisRotatePoint(rot, point_in, point_out); // rotate point by the given rot value
+
         // translation
         point_out[0] += T(tra_[0]);
         point_out[1] += T(tra_[1]);
@@ -436,8 +444,10 @@ struct XCostFunctorPnP
         point_in[0] = T(object_point_[0]);
         point_in[1] = T(object_point_[1]);
         point_in[2] = T(object_point_[2]);
+
         // rotation
         ceres::AngleAxisRotatePoint(rot, point_in, point_out); // rotate point by the given rot value
+
         // translation
         point_out[0] += T(tra[0]);
         point_out[1] += T(tra[1]);
@@ -500,6 +510,7 @@ struct ZCostFunctorPnP
         point_in[0] = T(object_point_[0]);
         point_in[1] = T(object_point_[1]);
         point_in[2] = T(object_point_[2]);
+
         // rotation
         T theta = sqrt(rot[0] * rot[0] + rot[1] * rot[1] + rot[2] * rot[2]);
         T rx = rot[0] / theta;
@@ -559,6 +570,7 @@ struct ZCostFunctorPnP
         T xy = x * y;
         x = x * (1.0 + D_[0] * r2 + D_[1] * r2 * r2) + 2.0 * xy * D_[2] + (r2 + 2.0 * x * x) * D_[3];
         y = y * (1.0 + D_[0] * r2 + D_[1] * r2 * r2) + 2.0 * xy * D_[3] + (r2 + 2.0 * y * y) * D_[2];
+
         // to image plane
         T u = x * K_[0][0] + K_[0][2];
         T v = y * K_[1][1] + K_[1][2];
@@ -666,7 +678,7 @@ bool solveCamPnP(
     tvec[0] = tra[0];
     tvec[1] = tra[1];
     tvec[2] = tra[2];
-    
+
     return true;
 }
 
@@ -726,7 +738,7 @@ void selectControlPoints(
     }
     cw1 /= static_cast<double>(n);
 
-    // // PCA
+    // PCA
     Eigen::MatrixXd A;
     A.resize(n, 3);
     for (size_t i = 0; i < n; i++)
@@ -1087,8 +1099,7 @@ void optimizeBeta(
 } //
 
 void computeCameraControlPoints(
-    const Eigen::Matrix<double, static_cast<int>(12), static_cast<int>(4)>
-        &eigen_vectors,
+    const Eigen::Matrix<double, static_cast<int>(12), static_cast<int>(4)> &eigen_vectors,
     const Eigen::Vector4d &betas,
     std::vector<Eigen::Vector3d> *camera_control_points)
 {
@@ -1153,12 +1164,14 @@ void rebuiltPts3dCamera(
     }
 }
 
-void computeRt(const std::vector<Eigen::Vector3d> &pts3d_camera,
-               const std::vector<Eigen::Vector3d> &pts3d_world,
-               Eigen::Matrix3d *R,
-               Eigen::Vector3d *t)
+void computeRt(
+    const std::vector<Eigen::Vector3d> &pts3d_camera,
+    const std::vector<Eigen::Vector3d> &pts3d_world,
+    Eigen::Matrix3d *R,
+    Eigen::Vector3d *t)
 {
     const int n = pts3d_camera.size();
+
     // step 1. compute center points
     Eigen::Vector3d pcc(0.0, 0.0, 0.0);
     Eigen::Vector3d pcw(0.0, 0.0, 0.0);
@@ -1180,13 +1193,11 @@ void computeRt(const std::vector<Eigen::Vector3d> &pts3d_camera,
     for (int i = 0; i < n; i++)
     {
         Pc.block(i, 0, 1, 3) = (pts3d_camera.at(i) - pcc).transpose();
-
         Pw.block(i, 0, 1, 3) = (pts3d_world.at(i) - pcw).transpose();
     }
 
     // step 3. compute R.
     Eigen::Matrix3d W = Pc.transpose() * Pw;
-
     Eigen::JacobiSVD<Eigen::Matrix3d> svd(W, Eigen::ComputeFullU | Eigen::ComputeFullV);
     Eigen::Matrix3d U = svd.matrixU();
     Eigen::Matrix3d V = svd.matrixV();
@@ -1202,11 +1213,12 @@ void computeRt(const std::vector<Eigen::Vector3d> &pts3d_camera,
     *t = pcc - (*R) * pcw;
 }
 
-double reprojectionError(const Eigen::Matrix3d &K,
-                         const std::vector<Eigen::Vector3d> &pts3d_world,
-                         const std::vector<Eigen::Vector2d> &pts2d,
-                         const Eigen::Matrix3d &R,
-                         const Eigen::Vector3d &t)
+double reprojectionError(
+    const Eigen::Matrix3d &K,
+    const std::vector<Eigen::Vector3d> &pts3d_world,
+    const std::vector<Eigen::Vector2d> &pts2d,
+    const Eigen::Matrix3d &R,
+    const Eigen::Vector3d &t)
 {
     const size_t n = pts3d_world.size();
     double sum_err2 = 0.0;

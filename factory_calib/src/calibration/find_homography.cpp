@@ -12,11 +12,12 @@
 
 // Templated to be used with autodifferentiation.
 template <typename T>
-void SymmetricGeometricDistanceTerms(const Eigen::Matrix<T, 3, 3> &h_mat,
-                                     const Eigen::Matrix<T, 2, 1> &x1,
-                                     const Eigen::Matrix<T, 2, 1> &x2,
-                                     T forward_error[2],
-                                     T backward_error[2])
+void SymmetricGeometricDistanceTerms(
+    const Eigen::Matrix<T, 3, 3> &h_mat,
+    const Eigen::Matrix<T, 2, 1> &x1,
+    const Eigen::Matrix<T, 2, 1> &x2,
+    T forward_error[2],
+    T backward_error[2])
 {
     typedef Eigen::Matrix<T, 3, 1> Vec3;
     Vec3 x(x1(0), x1(1), T(1.0));
@@ -98,6 +99,7 @@ inline bool Homography2DFromCorrespondencesLinearEuc(const MatXd &x1, const MatX
         L(j, 4) = -x2(0, i) * x1(1, i); // e
         L(j, 5) = -x2(0, i);            // f
     }
+
     // Solve Lx=B
     const VecXd h_vec = L.fullPivLu().solve(b);
     Homography2DNormalizedParameterization<double>::To(h_vec, h_mat);
@@ -128,6 +130,7 @@ ceres::CallbackReturnType TerminationCheckingCallback::operator()(const ceres::I
     {
         return ceres::SOLVER_CONTINUE;
     }
+
     // Calculate average of symmetric geometric distance.
     double average_distance = 0.0;
     for (int i = 0; i < x1_.cols(); i++)
@@ -170,6 +173,7 @@ inline bool EstimateHomography2DFromCorrespondences(
                                                                  9>(homography_symmetric_geometric_cost_function),
                                  NULL, h_mat->data());
     }
+
     // Configure the solve.
     ceres::Solver::Options solver_options;
     solver_options.linear_solver_type = ceres::DENSE_SCHUR; // DENSE_QR;

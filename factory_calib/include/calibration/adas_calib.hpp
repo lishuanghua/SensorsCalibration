@@ -3,6 +3,7 @@
  * Yan Guohang <yanguohang@pjlab.org.cn>
  * Liu Zhuochun <liuzhuochun@pjlab.org.cn>
  */
+
 #pragma once
 
 #include <dirent.h>
@@ -22,7 +23,7 @@
 #include "Eigen/Dense"
 #include <opencv2/opencv.hpp>
 
-#define PI acos(-1)
+#define PI (acos(-1))
 
 namespace cameracalib
 {
