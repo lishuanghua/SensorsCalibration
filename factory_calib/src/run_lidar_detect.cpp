@@ -17,16 +17,22 @@ char usage[] = {"[Usage]: ./bin/run_lidar_detect pcds \n"
 
 int main(int argc, char **argv)
 {
+    std::cout << "Enter in int main(int argc, char **argv) function" << std::endl;
+
     if (argc != 2)
     {
         std::cerr << usage;
 
         return -1;
     }
+
     std::string pcds_dir = argv[1];
+
     // round hole board
     lidarcalib::LidarDetector lidar_detector;
     lidar_detector.LidarDetection(pcds_dir);
+
+    std::cout << "Leave out int main(int argc, char **argv) function" << std::endl;
 
     return 0;
 }

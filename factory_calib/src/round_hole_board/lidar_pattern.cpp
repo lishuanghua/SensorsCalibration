@@ -20,10 +20,13 @@
 #include <opencv2/opencv.hpp>
 
 #include "logging.hpp"
+
 namespace lidarcalib
 {
     void LidarDetector::LidarDetection(std::string pcds_dir)
     {
+        std::cout << "Enter in void LidarDetector::LidarDetection(std::string pcds_dir) function" << std::endl;
+
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloude(new pcl::PointCloud<pcl::PointXYZ>);
 
@@ -40,6 +43,7 @@ namespace lidarcalib
 
             exit(1);
         }
+
         struct dirent *ptr;
         while ((ptr = readdir(dir)) != NULL)
         {
@@ -56,8 +60,7 @@ namespace lidarcalib
             }
         }
 
-        pcl::PointCloud<pcl::PointXYZ>::Ptr velocloud(
-            new pcl::PointCloud<pcl::PointXYZ>),
+        pcl::PointCloud<pcl::PointXYZ>::Ptr velocloud(new pcl::PointCloud<pcl::PointXYZ>),
             velo_filtered(new pcl::PointCloud<pcl::PointXYZ>),
             velo_filtered2(new pcl::PointCloud<pcl::PointXYZ>),
             plane_cloud(new pcl::PointCloud<pcl::PointXYZ>),
@@ -66,10 +69,11 @@ namespace lidarcalib
         velocloud = cloud;
 
         pcl::PassThrough<pcl::PointXYZ> pass1;
-        pass1.setInputCloud(velocloud);
-        pass1.setFilterFieldName("x");
-        pass1.setFilterLimits(5, 7);
-        pass1.filter(*velo_filtered);
+        pass1.setInputCloud(velocloud); // 设置输入的点云数据。你需要将待过滤的点云数据传递给该函数进行处理。
+        pass1.setFilterFieldName("x");  // 设置要过滤的字段名称。例如，pass.setFilterFieldName("z") 设置要过滤的字段为 z 坐标。
+        pass1.setFilterLimits(5, 7);    // 设置过滤的阈值范围。使用该函数可以设置最小和最大允许的值。
+        // 例如，pass.setFilterLimits(0.0, 1.0) 将只保留 z 坐标在 0 到 1 之间的点云数据。
+        pass1.filter(*velo_filtered); // 执行过滤操作。该函数将应用设定的过滤条件，并返回过滤后的点云数据。
 
         pcl::PassThrough<pcl::PointXYZ> pass2;
         pass2.setInputCloud(velo_filtered);
@@ -77,30 +81,31 @@ namespace lidarcalib
         pass2.setFilterLimits(-2.5, 0);
         pass2.filter(*velo_filtered2);
 
-        pcl::io::savePCDFileBinary("test_filtered.pcd", *velo_filtered2);
+        pcl::io::savePCDFileBinary("test_filtered.pcd", *velo_filtered2); // savePCDFileBinary保存速度较快。
         // Plane segmentation
         pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
         pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
         Eigen::Vector3f axis(0, 1, 0);
         pcl::SACSegmentation<pcl::PointXYZ> plane_segmentation;
-        plane_segmentation.setModelType(pcl::SACMODEL_PARALLEL_PLANE);
+        plane_segmentation.setModelType(pcl::SACMODEL_PARALLEL_PLANE); // 设置模型类型
+        // 设定距离阀值，距离阀值决定了点被认为是局内点是必须满足的条件，表示点到估计模型的距离最大值
         plane_segmentation.setDistanceThreshold(0.05);
-        plane_segmentation.setMethodType(pcl::SAC_RANSAC);
-        plane_segmentation.setAxis(axis);
-        plane_segmentation.setEpsAngle(0.05);
-        plane_segmentation.setOptimizeCoefficients(true);
-        plane_segmentation.setMaxIterations(10);
-        plane_segmentation.setInputCloud(velo_filtered2);
-        plane_segmentation.segment(*inliers, *coefficients);
+        plane_segmentation.setMethodType(pcl::SAC_RANSAC);   // 设置随机采样一致性方法类型
+        plane_segmentation.setAxis(axis);                    // 设置分割模型垂直的轴线。因此要对地面进行滤波，所以此处平面模型设置为垂直于Z轴
+        plane_segmentation.setEpsAngle(0.05);                // 允许平面模型法线与Z轴的最大偏差为0.1弧度，也就是说大于0.1弧度的平面模型不考虑
+        plane_segmentation.setOptimizeCoefficients(true);    // 设置对估计模型优化
+        plane_segmentation.setMaxIterations(10);             // 设置迭代的最大次数10
+        plane_segmentation.setInputCloud(velo_filtered2);    // 设置输入的点云数据。你需要将待过滤的点云数据传递给该函数进行处理。
+        plane_segmentation.segment(*inliers, *coefficients); // 向分割算法中输入模型参数，输出分割模型的点云索引对象
 
         float a_final = coefficients->values[0] / coefficients->values[3];
         float b_final = coefficients->values[1] / coefficients->values[3];
         float c_final = coefficients->values[2] / coefficients->values[3];
 
         pcl::ExtractIndices<pcl::PointXYZ> extract;
-        extract.setInputCloud(velo_filtered2);
-        extract.setIndices(inliers);
-        extract.filter(*plane_cloud);
+        extract.setInputCloud(velo_filtered2); // 设置输入的点云数据。你需要将待过滤的点云数据传递给该函数进行处理。
+        extract.setIndices(inliers);           // 提取内点的索引并存储在其中
+        extract.filter(*plane_cloud);          // 将外层的提取结果保存到plane_cloud
         // pcl::io::savePCDFileBinary("test_plane.pcd", *plane_cloud);
         edges_cloud = plane_cloud;
         pcl::PointCloud<pcl::PointXYZ>::Ptr plane_edges_cloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -126,18 +131,22 @@ namespace lidarcalib
             {
                 min_pt_x = pt->x;
             }
+
             if (pt->x > max_pt_x)
             {
                 max_pt_x = pt->x;
             }
+
             if (pt->y < min_pt_y)
             {
                 min_pt_y = pt->y;
             }
+
             if (pt->y > max_pt_y)
             {
                 max_pt_y = pt->y;
             }
+
             average_x += changed(0, 0);
             cnt++;
 
@@ -174,6 +183,7 @@ namespace lidarcalib
                         }
                     }
                 }
+
                 if (cnt > max_cnt)
                 {
                     max_cnt = cnt;
@@ -182,6 +192,7 @@ namespace lidarcalib
                 }
             }
         }
+
         pcl::PointCloud<pcl::PointXYZ>::Ptr initial_centers(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointXYZ center;
         center.y = float(max_j) / 200 + min_pt_x + 0.3;
@@ -201,8 +212,7 @@ namespace lidarcalib
         std::cout << center.y << ',' << center.z << std::endl;
         initial_centers->push_back(center);
         // circle detection
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_f(
-            new pcl::PointCloud<pcl::PointXYZ>),
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_f(new pcl::PointCloud<pcl::PointXYZ>),
             centroid_candidates(new pcl::PointCloud<pcl::PointXYZ>);
         for (pcl::PointCloud<pcl::PointXYZ>::iterator pt =
                  initial_centers->points.begin();
@@ -233,6 +243,7 @@ namespace lidarcalib
                             }
                         }
                     }
+
                     if (cnt < min_cnt)
                     {
                         cnt_cnt = 1;
@@ -250,6 +261,10 @@ namespace lidarcalib
                         {
                             cnt_cnt++;
                         }
+                    }
+                    else
+                    {
+                        std::cout << "Error occurred, please check it!" << std::endl;
                     }
                 }
             }
@@ -277,7 +292,9 @@ namespace lidarcalib
         circle_cloud->height = 1;
         circle_cloud->width = circle_cloud->points.size();
         //  pcl::io::savePCDFileASCII("final_cloud.pcd", *plane_cloud+*circle_cloud);
-        pcl::io::savePCDFileASCII("circle_cloud.pcd", *circle_cloud);
+        pcl::io::savePCDFileASCII("circle_cloud.pcd", *circle_cloud); // 保存为ASICC格式，可以直接用记事本打开
+
+        std::cout << "Leave out void LidarDetector::LidarDetection(std::string pcds_dir) function" << std::endl;
     }
 
 } // lidarcalib
