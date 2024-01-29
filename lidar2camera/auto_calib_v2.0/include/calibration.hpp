@@ -9,13 +9,13 @@
 #include "logging.hpp"
 #include "utility.hpp"
 #include "dataloader.hpp"
-
 struct PointXYZINS
 {
     PCL_ADD_POINT4D;
     // PCL_ADD_NORMAL4D;
-    union{
-        struct 
+    union
+    {
+        struct
         {
             float intensity;
             float curvature;
@@ -23,13 +23,9 @@ struct PointXYZINS
         };
     };
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-}EIGEN_ALIGN16;
+} EIGEN_ALIGN16;
 
-POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZINS,
-    (float, intensity, intensity)
-    (float, curvature, curvature)
-    (int, segment, segment)
-)
+POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZINS,                                  (float, intensity, intensity)(float, curvature, curvature)(int, segment, segment))
 
 class Calibrator
 {
@@ -42,13 +38,13 @@ public:
         const std::string error_file);
     void Calibrate();
     void ProcessPointcloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr pc_origin);
-    bool CalScore(Eigen::Matrix4f T, float& score, bool is_coarse);
+    bool CalScore(Eigen::Matrix4f T, float &score, bool is_coarse);
     void VisualProjection(Eigen::Matrix4f T, std::string img_file, std::string save_name);
     void VisualProjectionSegment(Eigen::Matrix4f T, std::string img_file, std::string save_name);
     void Segment_pc(const pcl::PointCloud<pcl::PointXYZI>::Ptr pc_origin,
                     pcl::PointCloud<pcl::Normal>::Ptr normals,
-                    std::vector<pcl::PointIndices>& seg_indices);
-    void BruteForceSearch(int rpy_range, float rpy_resolution,int xyz_range, float xyz_resolution, bool is_coarse);
+                    std::vector<pcl::PointIndices> &seg_indices);
+    void BruteForceSearch(int rpy_range, float rpy_resolution, int xyz_range, float xyz_resolution, bool is_coarse);
     void RandomSearch(int search_count, float xyz_range, float rpy_range, bool is_coarse);
     bool ProjectOnImage(const Eigen::Vector4f &vec, const Eigen::Matrix4f &T, int &x, int &y, int margin);
     void PrintCurrentError();

@@ -9,11 +9,12 @@
 void SaveExtrinsic(Eigen::Matrix4f T)
 {
     std::string file_name = "extrinsic.txt";
-    
+
     std::ofstream ofs(file_name);
     if (!ofs.is_open())
     {
         std::cerr << "open file " << file_name << " failed. Cannot write calib result." << std::endl;
+
         exit(1);
     }
     ofs << "Extrinsic = " << std::endl;
@@ -33,12 +34,16 @@ void SaveExtrinsic(Eigen::Matrix4f T)
     std::cout << "Calibration result was saved to file calib_result.txt" << std::endl;
 }
 
-int main(int argc, char *argv[]) {
-    if (argc != 2) {
+int main(int argc, char *argv[])
+{
+    if (argc != 2)
+    {
         std::cout << "Usage: ./bin/run_lidar2camera <data_folder>\n"
                      "example:\n\t"
                      "./bin/run_lidar2camera data/st/1\n"
-                     "./bin/run_lidar2camera data/kitti/1" << std::endl;
+                     "./bin/run_lidar2camera data/kitti/1"
+                  << std::endl;
+
         return 0;
     }
 
@@ -52,23 +57,32 @@ int main(int argc, char *argv[]) {
     if ((dir = opendir(data_folder.c_str())) == NULL)
     {
         std::cout << "Open dir " << mask_dir << " error !" << std::endl;
+
         exit(1);
     }
+
     while ((ptr = readdir(dir)) != NULL)
     {
         std::string name = ptr->d_name;
         auto n = name.find_last_of('.');
-        if(name == "." || name == ".." || n == std::string::npos){
+        if (name == "." || name == ".." || n == std::string::npos)
+        {
             ptr++;
             continue;
         }
         std::string suffix = name.substr(n);
         if (suffix == ".png" || suffix == ".jpg" || suffix == ".jpeg")
+        {
             img_file = data_folder + '/' + ptr->d_name;
+        }
         else if (suffix == ".pcd")
+        {
             lidar_file = data_folder + '/' + ptr->d_name;
+        }
         else if (suffix == ".txt")
+        {
             calib_file = data_folder + '/' + ptr->d_name;
+        }
         ptr++;
     }
 
@@ -78,9 +92,7 @@ int main(int argc, char *argv[]) {
     Eigen::Matrix4f refined_extrinsic = calibrator.GetFinalTransformation();
     SaveExtrinsic(refined_extrinsic);
     auto time_end = std::chrono::steady_clock::now();
-    std::cout << "Total calib time: "
-                << std::chrono::duration<double>(time_end - time_begin).count()
-                << "s" << std::endl;
-                
+    std::cout << "Total calib time: " << std::chrono::duration<double>(time_end - time_begin).count() << "s" << std::endl;
+
     return 0;
 }

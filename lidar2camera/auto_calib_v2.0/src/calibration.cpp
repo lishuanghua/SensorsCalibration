@@ -2,6 +2,7 @@
 
 cv::Mat color_bar = cv::Mat(1, 13 * 3 * 3, CV_8UC3);
 unsigned char *pBar = color_bar.data;
+
 void Create_ColorBar()
 {
     int H[13] = {180, 120, 60, 160, 100, 40, 150, 90, 30, 140, 80, 20, 10};
@@ -15,11 +16,17 @@ void Create_ColorBar()
     for (int ba = 0; ba < 13 * 3 * 3; v++, s++, h++, ba++)
     {
         if (h == 13)
+        {
             h = 0;
+        }
         if (s == 3 * 13)
+        {
             s = 0;
+        }
         if (v == 3 * 13 * 3)
+        {
             v = 0;
+        }
         pColor[ba * 3 + 0] = H[h];
         pColor[ba * 3 + 1] = S[s / 13];
         pColor[ba * 3 + 2] = V[v / 13 / 3];
@@ -27,11 +34,12 @@ void Create_ColorBar()
     cv::cvtColor(color, color_bar, CV_HSV2BGR);
 }
 
-Calibrator::Calibrator(const std::string mask_dir,
-                       const std::string lidar_file,
-                       const std::string calib_file,
-                       const std::string img_file,
-                       const std::string error_file)
+Calibrator::Calibrator(
+    const std::string mask_dir,
+    const std::string lidar_file,
+    const std::string calib_file,
+    const std::string img_file,
+    const std::string error_file)
 {
     // load calib file
     DataLoader::LoadCalibFile(calib_file, intrinsic_, extrinsic_, dist_);
@@ -49,8 +57,10 @@ Calibrator::Calibrator(const std::string mask_dir,
     // add error to the inital extrinsic
     float var[6] = {0};
     std::ifstream file(error_file);
-    if (!file.is_open()) {
+    if (!file.is_open())
+    {
         std::cout << "open file " << error_file << " failed." << std::endl;
+
         exit(1);
     }
     file >> var[0] >> var[1] >> var[2] >> var[3] >> var[4] >> var[5];
@@ -80,19 +90,22 @@ void Calibrator::ProcessPointcloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr pc
     Util::GenVars(1, 5, 1, 0.5, vars);
     for (const auto src_pt : pc_origin->points)
     {
-        if (!std::isfinite(src_pt.x) || !std::isfinite(src_pt.y) ||
-            !std::isfinite(src_pt.z))
+        if (!std::isfinite(src_pt.x) || !std::isfinite(src_pt.y) || !std::isfinite(src_pt.z))
+        {
             continue;
+        }
         Eigen::Vector4f vec;
         vec << src_pt.x, src_pt.y, src_pt.z, 1;
         int x, y;
-        for(Var6 var : vars){
+        for (Var6 var : vars)
+        {
             Eigen::Matrix4f extrinsic = extrinsic_ * Util::GetDeltaT(var.value);
             if (ProjectOnImage(vec, extrinsic, x, y, margin))
             {
                 intensity_max = MAX(intensity_max, src_pt.intensity);
                 // intensity_mean += src_pt.intensity;
                 pc_filtered->points.push_back(src_pt);
+
                 break;
             }
         }
@@ -105,8 +118,10 @@ void Calibrator::ProcessPointcloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr pc
     // intensity_mean /= pc_filtered->size();
     // intensity_mean *= 2;
     // intensity_mean = MAX(intensity_mean, 1);
-    if(intensity_max > 1)
+    if (intensity_max > 1)
+    {
         intensity_max /= 2;
+    }
 
     // segment pc
     pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
@@ -144,14 +159,14 @@ void Calibrator::ProcessPointcloud(const pcl::PointCloud<pcl::PointXYZI>::Ptr pc
     }
 }
 
-void Calibrator::Segment_pc(const pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,
-                            pcl::PointCloud<pcl::Normal>::Ptr normals,
-                            std::vector<pcl::PointIndices> &seg_indices)
-{   
+void Calibrator::Segment_pc(
+    const pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,
+    pcl::PointCloud<pcl::Normal>::Ptr normals,
+    std::vector<pcl::PointIndices> &seg_indices)
+{
     // compute_normals
     pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> norm_est;
-    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree(
-        new pcl::search::KdTree<pcl::PointXYZI>());
+    pcl::search::KdTree<pcl::PointXYZI>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZI>());
     norm_est.setSearchMethod(tree);
     norm_est.setKSearch(40);
     // norm_est.setRadiusSearch(5);
@@ -216,7 +231,7 @@ void Calibrator::Segment_pc(const pcl::PointCloud<pcl::PointXYZI>::Ptr cloud,
 }
 
 void Calibrator::Calibrate()
-{   
+{
     VisualProjection(init_extrinsic_, img_file_, "init_proj.png");
     VisualProjectionSegment(init_extrinsic_, img_file_, "init_proj_seg.png");
     VisualProjection(extrinsic_, img_file_, "error_proj.png");
@@ -231,13 +246,12 @@ void Calibrator::Calibrate()
     std::cout << "init_score: " << max_score_ << std::endl;
     BruteForceSearch(10, 0.5, 0, 0, true); //[-5, 5]
     BruteForceSearch(6, 0.15, 0, 0, true); //[-0.9, 0.9]
-    RandomSearch(5000, 0.1, 0.5, true); //[-0.5, 0.5]
+    RandomSearch(5000, 0.1, 0.5, true);    //[-0.5, 0.5]
 
     // float var[6] = {-0.3, 0, 0.1, 0, 0, 0};
     // CalScore(extrinsic_* Util::GetDeltaT(var), max_score_, true);
     // VisualProjection(extrinsic_ * Util::GetDeltaT(var), img_file_, "error_proj.png");
     // VisualProjectionSegment(extrinsic_ * Util::GetDeltaT(var), img_file_, "error_proj_seg.png");
-
 
     std::cout << "---------------Result---------------" << std::endl;
     PrintCurrentError();
@@ -278,10 +292,12 @@ bool Calibrator::CalScore(Eigen::Matrix4f T, float &score, bool is_coarse)
                     }
                 }
                 else
+                {
                     break;
+                }
             }
         }
-    }    
+    }
 
     // calculate consistency
     std::vector<float> normal_sims, intensity_sims, segment_sims;
@@ -291,10 +307,14 @@ bool Calibrator::CalScore(Eigen::Matrix4f T, float &score, bool is_coarse)
     {
         // filter masks with too few points
         if (mask_point_num_[i] < min_mask_point_num)
+        {
             continue;
+        }
         int points_on_mask = mask_intensity[i].size();
         if (points_on_mask < 20)
-            continue;     
+        {
+            continue;
+        }
         float adjust = 1 - 0.5 * pow(points_on_mask, -0.5);
         // float adjust = 1;
 
@@ -313,14 +333,16 @@ bool Calibrator::CalScore(Eigen::Matrix4f T, float &score, bool is_coarse)
         // }
         // normal_sims.push_back(normal_sim);
         float normal_sim = (1 - Util::Std(mask_normal[i]) / curvature_max_) * adjust;
-        if(is_coarse){
+        if (is_coarse)
+        {
             weight_normal.push_back(points_on_mask);
         }
         normal_sims.push_back(normal_sim);
 
         // intensity consistency
         float intensity_sim = (1 - Util::Std(mask_intensity[i])) * adjust;
-        if(is_coarse){
+        if (is_coarse)
+        {
             weight_intensity.push_back(points_on_mask);
         }
         intensity_sims.push_back(intensity_sim);
@@ -335,7 +357,9 @@ bool Calibrator::CalScore(Eigen::Matrix4f T, float &score, bool is_coarse)
             }
             sort(seg_ratio.begin(), seg_ratio.end(), std::greater<int>());
             if (seg_ratio[0] < 10)
+            {
                 continue;
+            }
             float k = 1;
             int sum = 0;
             float segment_sim = 0;
@@ -349,14 +373,17 @@ bool Calibrator::CalScore(Eigen::Matrix4f T, float &score, bool is_coarse)
             segment_sim /= sum;
             // adjust = 1 - pow(sum, -0.5);
             segment_sims.push_back(segment_sim * adjust);
-            if(is_coarse){
+            if (is_coarse)
+            {
                 weight_seg.push_back(sum);
             }
         }
     }
+
     if (normal_sims.size() == 0 || intensity_sims.size() == 0 || segment_sims.size() == 0)
     {
         std::cout << "Not enough points on masks. Skip this extrinsic." << std::endl;
+
         return false;
     }
 
@@ -373,7 +400,7 @@ bool Calibrator::CalScore(Eigen::Matrix4f T, float &score, bool is_coarse)
 void Calibrator::BruteForceSearch(int rpy_range, float rpy_resolution, int xyz_range, float xyz_resolution, bool is_coarse)
 {
     std::cout << "Start brute-force search around [-" << rpy_range * rpy_resolution << ","
-              << rpy_range * rpy_resolution << "] degree and [-" << xyz_range * xyz_resolution 
+              << rpy_range * rpy_resolution << "] degree and [-" << xyz_range * xyz_resolution
               << "," << xyz_range * xyz_resolution << "] m" << std::endl;
     float best_var[6] = {0};
     float score;
@@ -391,11 +418,11 @@ void Calibrator::BruteForceSearch(int rpy_range, float rpy_resolution, int xyz_r
             }
 
             std::cout << "match score increase to: " << max_score_ << ", "
-                    << "var:" << best_var[0] << " " << best_var[1] << " " << best_var[2]
-                    << " " << best_var[3] << " " << best_var[4] << " " << best_var[5]
-                    << std::endl;
+                      << "var:" << best_var[0] << " " << best_var[1] << " " << best_var[2]
+                      << " " << best_var[3] << " " << best_var[4] << " " << best_var[5]
+                      << std::endl;
         }
-    }    
+    }
     std::cout << "best var:" << best_var[0] << " " << best_var[1] << " " << best_var[2] << " " << best_var[3] << " "
               << best_var[4] << " " << best_var[5] << std::endl;
     Eigen::Matrix4f deltaT = Util::GetDeltaT(best_var);
@@ -409,8 +436,7 @@ void Calibrator::RandomSearch(int search_count, float xyz_range, float rpy_range
     float var[6] = {0};
     float bestVal[6] = {0};
 
-    std::default_random_engine generator((clock() - time(0)) /
-                                         (double)CLOCKS_PER_SEC);
+    std::default_random_engine generator((clock() - time(0)) / (double)CLOCKS_PER_SEC);
     std::uniform_real_distribution<double> distribution_xyz(-xyz_range, xyz_range);
     std::uniform_real_distribution<double> distribution_rpy(-rpy_range, rpy_range);
 
@@ -461,7 +487,7 @@ Eigen::Matrix4f Calibrator::GetFinalTransformation()
 void Calibrator::VisualProjection(Eigen::Matrix4f T, std::string img_file, std::string save_name)
 {
     cv::Mat img_color = cv::imread(img_file);
-    if(intrinsic_.cols() == 3)
+    if (intrinsic_.cols() == 3)
     {
         Util::UndistImg(img_color, intrinsic_, dist_);
     }
@@ -473,7 +499,8 @@ void Calibrator::VisualProjection(Eigen::Matrix4f T, std::string img_file, std::
         int x, y;
         if (ProjectOnImage(vec, T, x, y, 0))
         {
-            if (src_pt.intensity > 0.4) {
+            if (src_pt.intensity > 0.4)
+            {
                 cv::Point2f lidar_point(x, y);
                 lidar_points.push_back(lidar_point);
             }
@@ -491,7 +518,7 @@ void Calibrator::VisualProjection(Eigen::Matrix4f T, std::string img_file, std::
 void Calibrator::VisualProjectionSegment(Eigen::Matrix4f T, std::string img_file, std::string save_name)
 {
     cv::Mat img_color = cv::imread(img_file);
-    if(intrinsic_.cols() == 3)
+    if (intrinsic_.cols() == 3)
     {
         Util::UndistImg(img_color, intrinsic_, dist_);
     }
@@ -503,7 +530,6 @@ void Calibrator::VisualProjectionSegment(Eigen::Matrix4f T, std::string img_file
         int x, y;
         if (ProjectOnImage(vec, T, x, y, 0))
         {
-
             int seg = src_pt.segment;
             if (seg != -1)
             {
@@ -540,10 +566,15 @@ bool Calibrator::ProjectOnImage(const Eigen::Vector4f &vec, const Eigen::Matrix4
         vec2 = intrinsic_ * cam_vec;
     }
     if (vec2(2) <= 0)
+    {
         return false;
+    }
     x = (int)cvRound(vec2(0) / vec2(2));
     y = (int)cvRound(vec2(1) / vec2(2));
     if (x >= -margin && x < IMG_W + margin && y >= -margin && y < IMG_H + margin)
+    {
         return true;
+    }
+
     return false;
 }
