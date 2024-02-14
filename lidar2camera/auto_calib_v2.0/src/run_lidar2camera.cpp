@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     {
         std::cout << "Usage: ./bin/run_lidar2camera <data_folder>\n"
                      "example:\n\t"
-                     "./bin/run_lidar2camera data/st/1\n"
+                     "./bin/run_lidar2camera data/st/1\n\t"
                      "./bin/run_lidar2camera data/kitti/1"
                   << std::endl;
 

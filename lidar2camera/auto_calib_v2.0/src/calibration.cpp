@@ -75,7 +75,7 @@ Calibrator::Calibrator(
     // preprocess point cloud
     std::cout << "----------Start processing data----------" << std::endl;
     ProcessPointcloud(pc_origin);
-
+    std::cout << "----------End processing data----------" << std::endl;
     Create_ColorBar();
 }
 
@@ -165,7 +165,7 @@ void Calibrator::Segment_pc(
     std::vector<pcl::PointIndices> &seg_indices)
 {
     // compute_normals
-    pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> norm_est;
+    pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> norm_est; // 法向量估计
     pcl::search::KdTree<pcl::PointXYZI>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZI>());
     norm_est.setSearchMethod(tree);
     norm_est.setKSearch(40);
@@ -185,9 +185,9 @@ void Calibrator::Segment_pc(
     seg.setDistanceThreshold(0.2);
     seg.setInputCloud(cloud);
     seg.setInputNormals(normals);
-    seg.segment(*indices_plane, *coefficients);
+    seg.segment(*indices_plane, *coefficients); // 对点云进行分割
 
-    pcl::ExtractIndices<pcl::PointXYZI> extract(true);
+    pcl::ExtractIndices<pcl::PointXYZI> extract(true); // 利用 pcl::ExtractIndices 类提取内点，将提取到的内点保存到新的点云中
     extract.setInputCloud(cloud);
     pcl::PointIndices::Ptr indices_notplane(new pcl::PointIndices);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_out(new pcl::PointCloud<pcl::PointXYZI>);
@@ -209,6 +209,7 @@ void Calibrator::Segment_pc(
     std::cout << "Plane points < 1500, stop extracting plane." << std::endl;
 
     // euclidean cluster extraction
+    // pcl::EuclideanClusterExtraction是基于欧式距离提取集群的方法，仅依据距离，将小于距离阈值的点云作为一个集群。
     pcl::EuclideanClusterExtraction<pcl::PointXYZI> ec;
     std::vector<pcl::PointIndices> eu_cluster_indices;
     ec.setClusterTolerance(0.25);
@@ -243,6 +244,8 @@ void Calibrator::Calibrate()
         std::cout << "The initial extrinsic parameter error is too large." << std::endl;
         exit(1);
     }
+    std::cout << "----------Stop calibration----------" << std::endl;
+
     std::cout << "init_score: " << max_score_ << std::endl;
     BruteForceSearch(10, 0.5, 0, 0, true); //[-5, 5]
     BruteForceSearch(6, 0.15, 0, 0, true); //[-0.9, 0.9]
@@ -436,7 +439,9 @@ void Calibrator::RandomSearch(int search_count, float xyz_range, float rpy_range
     float var[6] = {0};
     float bestVal[6] = {0};
 
+    // 默认随机数生成器是 std::default_random_engine 类型别名定义的随机无符号整数的通用源。
     std::default_random_engine generator((clock() - time(0)) / (double)CLOCKS_PER_SEC);
+    // C++ 11 std::uniform_real_distribution(-1，1)给出范围为[-1,1)的数字。
     std::uniform_real_distribution<double> distribution_xyz(-xyz_range, xyz_range);
     std::uniform_real_distribution<double> distribution_rpy(-rpy_range, rpy_range);
 
