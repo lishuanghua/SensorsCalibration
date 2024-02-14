@@ -68,6 +68,7 @@ void CalibrationInit(Eigen::Matrix4d json_param)
         transform_flag[i / 2] = (i % 2) ? (-1) : 1;
         Eigen::Matrix4d tmp = Eigen::Matrix4d::Identity();
         Eigen::Matrix3d rot_tmp;
+        // 表示先绕Z轴旋转transform_flag[2] rad，再绕Y轴旋转transform_flag[1] rad，再绕X轴旋转transform_flag[0] rad
         rot_tmp =
             Eigen::AngleAxisd(transform_flag[0] * cali_scale_degree_ / 180.0 * M_PI,
                               Eigen::Vector3d::UnitX()) *
