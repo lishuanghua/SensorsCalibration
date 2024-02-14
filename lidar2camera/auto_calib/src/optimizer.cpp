@@ -37,7 +37,7 @@ void Optimizer::Calibrate(const cv::Mat *distance_img, const pcl::PointCloud<pcl
 
     int iteration_num = 0;
     Eigen::Matrix3d rotation_matrix = curr_optim_extrinsic_.block<3, 3>(0, 0);
-    Eigen::Vector3d ea = rotation_matrix.eulerAngles(2, 1, 0);
+    Eigen::Vector3d ea = rotation_matrix.eulerAngles(2, 1, 0); // 旋转矩阵转欧拉角
     float target_extrinsic_vec[6] = {0}, curr_optim_extrinsic_vec[6] = {0};
     bool is_violence_search = false;
     if (is_violence_search)

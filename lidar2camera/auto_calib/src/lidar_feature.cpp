@@ -33,7 +33,6 @@ void LidarFeature::extract_feature(
     const cv::Mat *distance_images,
     pcl::PointCloud<pcl::PointXYZI>::Ptr register_cloud)
 {
-
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_pole(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_lane(new pcl::PointCloud<pcl::PointXYZI>);
@@ -96,7 +95,6 @@ void LidarFeature::extract_objects(
     pcl::PointCloud<pcl::PointXYZI>::Ptr &cloud_car,
     pcl::PointCloud<pcl::PointXYZI>::Ptr &trans_cloud_lane)
 {
-
     pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
     pcl::SACSegmentation<pcl::PointXYZI> seg;
