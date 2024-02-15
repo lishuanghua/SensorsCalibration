@@ -67,9 +67,8 @@ void LoadCalibFile(const std::string &filename, std::map<int32_t, InitialExtrins
         ss >> tmpStr >> device_id;
         getline(file, line);
         ss = std::stringstream(line);
-        ss >> tmpStr >> extrinsic.euler_angles[0] >> extrinsic.euler_angles[1] >>
-            extrinsic.euler_angles[2] >> extrinsic.t_matrix[0] >>
-            extrinsic.t_matrix[1] >> extrinsic.t_matrix[2];
+        ss >> tmpStr >> extrinsic.euler_angles[0] >> extrinsic.euler_angles[1] >> extrinsic.euler_angles[2] >>
+            extrinsic.t_matrix[0] >> extrinsic.t_matrix[1] >> extrinsic.t_matrix[2];
 
         extrinsic.euler_angles[0] = extrinsic.euler_angles[0] * degree_2_radian;
         extrinsic.euler_angles[1] = extrinsic.euler_angles[1] * degree_2_radian;
@@ -87,6 +86,7 @@ int main(int argc, char *argv[])
                      "./bin/run_lidar2lidar data/0001/lidar_cloud_path.txt "
                      "data/0001/initial_extrinsic.txt"
                   << std::endl;
+
         return 0;
     }
     auto lidar_file = argv[1];
