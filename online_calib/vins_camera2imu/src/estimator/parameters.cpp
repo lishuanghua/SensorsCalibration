@@ -1,8 +1,8 @@
 /*******************************************************
  * Copyright (C) 2019, Aerial Robotics Group, Hong Kong University of Science and Technology
- * 
+ *
  * This file is part of VINS.
- * 
+ *
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *******************************************************/
@@ -54,16 +54,17 @@ int FLOW_BACK;
 
 void readParameters(std::string config_file)
 {
-    FILE *fh = fopen(config_file.c_str(),"r");
-    if(fh == NULL){
+    FILE *fh = fopen(config_file.c_str(), "r");
+    if (fh == NULL)
+    {
         LOGW("config_file dosen't exist; wrong config_file path");
         // ROS_BREAK();
-        return;          
+        return;
     }
     fclose(fh);
 
     cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
-    if(!fsSettings.isOpened())
+    if (!fsSettings.isOpened())
     {
         std::cerr << "ERROR: Wrong path to settings" << std::endl;
     }
@@ -82,7 +83,7 @@ void readParameters(std::string config_file)
 
     USE_IMU = fsSettings["imu"];
     printf("USE_IMU: %d\n", USE_IMU);
-    if(USE_IMU)
+    if (USE_IMU)
     {
         fsSettings["imu_topic"] >> IMU_TOPIC;
         printf("IMU_TOPIC: %s\n", IMU_TOPIC.c_str());
@@ -118,9 +119,9 @@ void readParameters(std::string config_file)
         // TIC.push_back(Eigen::Vector3d::Zero());
         EX_CALIB_RESULT_PATH = OUTPUT_FOLDER + "/extrinsic_parameter.csv";
     }
-    else 
+    else
     {
-        if ( ESTIMATE_EXTRINSIC == 1)
+        if (ESTIMATE_EXTRINSIC == 1)
         {
             LOGW(" Optimize extrinsic param around initial guess!");
             EX_CALIB_RESULT_PATH = OUTPUT_FOLDER + "/extrinsic_parameter.csv";
@@ -134,35 +135,34 @@ void readParameters(std::string config_file)
         cv::cv2eigen(cv_T, T);
         RIC.push_back(T.block<3, 3>(0, 0));
         TIC.push_back(T.block<3, 1>(0, 3));
-    } 
-    
+    }
+
     NUM_OF_CAM = fsSettings["num_of_cam"];
     printf("camera number %d\n", NUM_OF_CAM);
 
-    if(NUM_OF_CAM != 1 && NUM_OF_CAM != 2)
+    if (NUM_OF_CAM != 1 && NUM_OF_CAM != 2)
     {
         printf("num_of_cam should be 1 or 2\n");
         assert(0);
     }
 
-
     int pn = config_file.find_last_of('/');
     std::string configPath = config_file.substr(0, pn);
-    
+
     std::string cam0Calib;
     fsSettings["cam0_calib"] >> cam0Calib;
     std::string cam0Path = configPath + "/" + cam0Calib;
     CAM_NAMES.push_back(cam0Path);
 
-    if(NUM_OF_CAM == 2)
+    if (NUM_OF_CAM == 2)
     {
         STEREO = 1;
         std::string cam1Calib;
         fsSettings["cam1_calib"] >> cam1Calib;
-        std::string cam1Path = configPath + "/" + cam1Calib; 
-        //printf("%s cam1 path\n", cam1Path.c_str() );
+        std::string cam1Path = configPath + "/" + cam1Calib;
+        // printf("%s cam1 path\n", cam1Path.c_str() );
         CAM_NAMES.push_back(cam1Path);
-        
+
         cv::Mat cv_T;
         fsSettings["body_T_cam1"] >> cv_T;
         Eigen::Matrix4d T;
@@ -186,7 +186,7 @@ void readParameters(std::string config_file)
     COL = fsSettings["image_width"];
     LOGI("ROW: %d COL: %d ", ROW, COL);
 
-    if(!USE_IMU)
+    if (!USE_IMU)
     {
         ESTIMATE_EXTRINSIC = 0;
         ESTIMATE_TD = 0;
@@ -196,56 +196,52 @@ void readParameters(std::string config_file)
     fsSettings.release();
 }
 
-
-void LoadExtrinsic(const std::string& filename, 
-                   Eigen::Matrix4d &extrinsic) 
+void LoadExtrinsic(const std::string &filename, Eigen::Matrix4d &extrinsic)
 {
     Json::Reader reader;
     Json::Value root;
 
     std::ifstream in(filename, std::ios::binary);
-    if(!in.is_open()){
+    if (!in.is_open())
+    {
         std::cout << "Error Opening " << filename << std::endl;
         exit(1);
     }
 
-    if(reader.parse(in, root, false)) {
+    if (reader.parse(in, root, false))
+    {
         auto name = root.getMemberNames();
         std::string id = *(name.begin());
         std::cout << id << std::endl;
         Json::Value data = root[id]["param"]["sensor_calib"]["data"];
         extrinsic << data[0][0].asDouble(), data[0][1].asDouble(), data[0][2].asDouble(), data[0][3].asDouble(),
-                     data[1][0].asDouble(), data[1][1].asDouble(), data[1][2].asDouble(), data[1][3].asDouble(),
-                     data[2][0].asDouble(), data[2][1].asDouble(), data[2][2].asDouble(), data[2][3].asDouble(),
-                     data[3][0].asDouble(), data[3][1].asDouble(), data[3][2].asDouble(), data[3][3].asDouble();
+            data[1][0].asDouble(), data[1][1].asDouble(), data[1][2].asDouble(), data[1][3].asDouble(),
+            data[2][0].asDouble(), data[2][1].asDouble(), data[2][2].asDouble(), data[2][3].asDouble(),
+            data[3][0].asDouble(), data[3][1].asDouble(), data[3][2].asDouble(), data[3][3].asDouble();
     }
     in.close();
+
     return;
 }
 
 void readCarParameters(std::string car_config_file_path)
 {
     // load ground truth camera2imu extrinsic
-    std::string gnss2lidar_file = car_config_file_path + 
-                             "/gnss/gnss-to-top_center_lidar-extrinsic.json";
-    std::string lidar2cam_file = car_config_file_path + 
-                             "/top_center_lidar/top_center_lidar-to-center_camera-extrinsic.json";
-    CAM_NAMES.push_back(car_config_file_path + 
-                            "/center_camera/center_camera-intrinsic.json");  
+    std::string gnss2lidar_file = car_config_file_path + "/gnss/gnss-to-top_center_lidar-extrinsic.json";
+    std::string lidar2cam_file = car_config_file_path + "/top_center_lidar/top_center_lidar-to-center_camera-extrinsic.json";
+    CAM_NAMES.push_back(car_config_file_path + "/center_camera/center_camera-intrinsic.json");
     Eigen::Matrix4d gnss2lidar, lidar2cam;
-    LoadExtrinsic(gnss2lidar_file, gnss2lidar);            
+    LoadExtrinsic(gnss2lidar_file, gnss2lidar);
     LoadExtrinsic(lidar2cam_file, lidar2cam);
     CAMERA2IMU_EX_GT = (lidar2cam * gnss2lidar).inverse();
 
     Eigen::Matrix3d fine_estimated_cam2imu_rot;
-    fine_estimated_cam2imu_rot << 1, 0, 0,
-                                  0, 0, 1,
-                                  0, -1, 0;
+    fine_estimated_cam2imu_rot << 1, 0, 0, 0, 0, 1, 0, -1, 0;
 
     // FILE *fh = fopen(config_file.c_str(),"r");
     // if(fh == NULL){
     //     LOGW("config_file dosen't exist; wrong config_file path");
-    //     return;          
+    //     return;
     // }
     // fclose(fh);
 
@@ -269,9 +265,9 @@ void readCarParameters(std::string car_config_file_path)
 
     USE_IMU = calib::imu;
     printf("USE_IMU: %d\n", USE_IMU);
-    if(USE_IMU)
+    if (USE_IMU)
     {
-        IMU_TOPIC =calib::imu_topic;
+        IMU_TOPIC = calib::imu_topic;
         printf("IMU_TOPIC: %s\n", IMU_TOPIC.c_str());
         ACC_N = calib::acc_n;
         ACC_W = calib::acc_w;
@@ -285,7 +281,7 @@ void readCarParameters(std::string car_config_file_path)
     MIN_PARALLAX = calib::keyframe_parallax;
     MIN_PARALLAX = MIN_PARALLAX / FOCAL_LENGTH;
 
-    OUTPUT_FOLDER=calib::output_path;
+    OUTPUT_FOLDER = calib::output_path;
     VINS_RESULT_PATH = OUTPUT_FOLDER + "/vio.csv";
     std::cout << "result path " << VINS_RESULT_PATH << std::endl;
     std::ofstream fout(VINS_RESULT_PATH, std::ios::out);
@@ -301,29 +297,30 @@ void readCarParameters(std::string car_config_file_path)
         TIC.push_back(CAMERA2IMU_EX_GT.block<3, 1>(0, 3));
         EX_CALIB_RESULT_PATH = OUTPUT_FOLDER + "/extrinsic_parameter.csv";
     }
-    else 
+    else
     {
-        if ( ESTIMATE_EXTRINSIC == 1)
+        if (ESTIMATE_EXTRINSIC == 1)
         {
             LOGW(" Optimize extrinsic param around initial guess!");
             EX_CALIB_RESULT_PATH = OUTPUT_FOLDER + "/extrinsic_parameter.csv";
         }
         if (ESTIMATE_EXTRINSIC == 0)
+        {
             LOGW(" fix extrinsic param ");
+        }
 
         RIC.push_back(fine_estimated_cam2imu_rot);
         TIC.push_back(CAMERA2IMU_EX_GT.block<3, 1>(0, 3));
-    } 
-    
+    }
+
     NUM_OF_CAM = calib::num_of_cam;
     printf("camera number %d\n", NUM_OF_CAM);
 
-    if(NUM_OF_CAM != 1)
+    if (NUM_OF_CAM != 1)
     {
         printf("num_of_cam should be 1\n");
         assert(0);
     }
-
 
     // int pn = config_file.find_last_of('/');
     // std::string configPath = config_file.substr(0, pn);
@@ -335,15 +332,19 @@ void readCarParameters(std::string car_config_file_path)
     TD = calib::td;
     ESTIMATE_TD = calib::estimate_td;
     if (ESTIMATE_TD)
+    {
         std::cout << "Unsynchronized sensors, online estimate time offset, initial td: " << TD;
+    }
     else
+    {
         std::cout << "Synchronized sensors, fix time offset: " << TD;
+    }
 
     ROW = calib::image_height;
     COL = calib::image_width;
     LOGI("ROW: %d COL: %d ", ROW, COL);
 
-    if(!USE_IMU)
+    if (!USE_IMU)
     {
         ESTIMATE_EXTRINSIC = 0;
         ESTIMATE_TD = 0;
