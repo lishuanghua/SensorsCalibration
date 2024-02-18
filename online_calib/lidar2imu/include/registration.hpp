@@ -15,98 +15,96 @@
 #include "common/common.hpp"
 #include "common/logging.hpp"
 
-namespace autoCalib {
-namespace calibration {
+namespace autoCalib
+{
+    namespace calibration
+    {
+        struct PointCloudFeatures
+        {
+            PointCloudFeatures()
+            {
+                corner_sharp_pts.reset(new PointCloudLidar);
+                corner_less_sharp_pts.reset(new PointCloudLidar);
+                surf_flat_pts.reset(new PointCloudLidar);
+                surf_less_flat_pts.reset(new PointCloudLidar);
+                remove_pts.reset(new PointCloudLidar);
+            }
 
-struct PointCloudFeatures {
-PointCloudFeatures() {
-    corner_sharp_pts.reset(new PointCloudLidar);
-    corner_less_sharp_pts.reset(new PointCloudLidar);
-    surf_flat_pts.reset(new PointCloudLidar);
-    surf_less_flat_pts.reset(new PointCloudLidar);
-    remove_pts.reset(new PointCloudLidar);
-}
+            PointCloudLidar::Ptr corner_sharp_pts;
+            PointCloudLidar::Ptr corner_less_sharp_pts;
+            PointCloudLidar::Ptr surf_flat_pts;
+            PointCloudLidar::Ptr surf_less_flat_pts;
+            PointCloudLidar::Ptr remove_pts;
+        };
 
-PointCloudLidar::Ptr corner_sharp_pts;
-PointCloudLidar::Ptr corner_less_sharp_pts;
-PointCloudLidar::Ptr surf_flat_pts;
-PointCloudLidar::Ptr surf_less_flat_pts;
-PointCloudLidar::Ptr remove_pts;
-};
+        // lidar features
+        static float cloudCurvature[400000];
+        static int cloudSortInd[400000];
+        static int cloudNeighborPicked[400000];
+        static int cloudLabel[400000];
 
-// lidar features
-static float cloudCurvature[400000];
-static int cloudSortInd[400000];
-static int cloudNeighborPicked[400000];
-static int cloudLabel[400000];
+        static bool comp(int i, int j) { return (cloudCurvature[i] < cloudCurvature[j]); }
 
-static bool comp (int i,int j) { return (cloudCurvature[i]<cloudCurvature[j]); }
+        static double para_q_[4] = {0, 0, 0, 1};
+        static double para_t_[3] = {0, 0, 0};
+        static Eigen::Map<Eigen::Quaterniond> q_last_curr_(para_q_);
+        static Eigen::Map<Eigen::Vector3d> t_last_curr_(para_t_);
 
-static double para_q_[4] = {0, 0, 0, 1};
-static double para_t_[3] = {0, 0, 0};
-static Eigen::Map<Eigen::Quaterniond> q_last_curr_(para_q_);
-static Eigen::Map<Eigen::Vector3d> t_last_curr_(para_t_);
+        class Registrator
+        {
+        public:
+            Registrator();
+            // ~Registrator();
 
-class Registrator {
- public:
-    Registrator();
-    // ~Registrator();
+            void inputFrame(PointCloud::Ptr cloud, Eigen::Matrix4d &extrinsic);
 
-    void inputFrame(PointCloud::Ptr cloud, Eigen::Matrix4d& extrinsic);
+            Eigen::Matrix4d GetFinalTransformation();
 
-    Eigen::Matrix4d GetFinalTransformation();
+        private:
+            void getFeatures(PointCloud::Ptr cloud, PointCloudFeatures &pcd_features);
 
-private:
-    void getFeatures(PointCloud::Ptr cloud, 
-                     PointCloudFeatures& pcd_features);
+            void removeClosedPointCloud(PointCloud::Ptr cloud_in, PointCloud::Ptr cloud_out, float thres);
 
-    void removeClosedPointCloud(PointCloud::Ptr cloud_in,
-                                PointCloud::Ptr cloud_out, 
-                                float thres);
-    
-    void TransformToStart(PointXYZI const *const pi, 
-                          PointXYZI *const po);
-    
-    void TransformToEnd(PointXYZI const *const pi, 
-                        PointXYZI *const po);
-    
- private:
-    //  paramters
-    const float minium_range_ = 0.1;
-    // lidar parameters
-    const float scan_period_ = 0.1;
-    const float n_scans_ = 64;
+            void TransformToStart(PointXYZI const *const pi, PointXYZI *const po);
 
-    const float distance_sq_threshold_ = 25;
-    const float nearby_scan_ = 2.5;
-    const bool distortion_ = false;
+            void TransformToEnd(PointXYZI const *const pi, PointXYZI *const po);
 
-    // skip first frame
-    bool systemInited_;
+        private:
+            //  paramters
+            const float minium_range_ = 0.1;
+            // lidar parameters
+            const float scan_period_ = 0.1;
+            const float n_scans_ = 64;
 
-    int corner_correspondence_;
-    int plane_correspondence_;
+            const float distance_sq_threshold_ = 25;
+            const float nearby_scan_ = 2.5;
+            const bool distortion_ = false;
 
-    // prev frame
-    PointCloudLidar::Ptr laserCloudCornerLast_;
-    PointCloudLidar::Ptr laserCloudSurfLast_;
-    PointCloudLidar::Ptr laserCloudFullRes_;
+            // skip first frame
+            bool systemInited_;
 
-    pcl::KdTreeFLANN<PointXYZI>::Ptr kdtreeCornerLast_;
-    pcl::KdTreeFLANN<PointXYZI>::Ptr kdtreeSurfLast_;
-    
-    // transformation
-    // double para_q_[4];
-    // double para_t_[3];
-    Eigen::Quaterniond q_w_curr_; 
-    Eigen::Vector3d t_w_curr_; 
-    // Eigen::Map<Eigen::Quaterniond> q_last_curr_;
-    // Eigen::Map<Eigen::Vector3d> t_last_curr_;
+            int corner_correspondence_;
+            int plane_correspondence_;
 
-    Eigen::Matrix4d final_transformation_;
-};
+            // prev frame
+            PointCloudLidar::Ptr laserCloudCornerLast_;
+            PointCloudLidar::Ptr laserCloudSurfLast_;
+            PointCloudLidar::Ptr laserCloudFullRes_;
 
-}  // namespace calibration
-}  // namespace autoCalib
+            pcl::KdTreeFLANN<PointXYZI>::Ptr kdtreeCornerLast_;
+            pcl::KdTreeFLANN<PointXYZI>::Ptr kdtreeSurfLast_;
 
-#endif  // LIDAR2CAR_REGISTRATION_REGISTRATION_HPP_
+            // transformation
+            // double para_q_[4];
+            // double para_t_[3];
+            Eigen::Quaterniond q_w_curr_;
+            Eigen::Vector3d t_w_curr_;
+            // Eigen::Map<Eigen::Quaterniond> q_last_curr_;
+            // Eigen::Map<Eigen::Vector3d> t_last_curr_;
+
+            Eigen::Matrix4d final_transformation_;
+        };
+    } // namespace calibration
+} // namespace autoCalib
+
+#endif // LIDAR2CAR_REGISTRATION_REGISTRATION_HPP_
