@@ -20,60 +20,59 @@
 #define RAD2DEG 180 / M_PI
 #define DEG2RAD M_PI / 180
 
-namespace autoCalib {
-namespace calibration {
+namespace autoCalib
+{
+    namespace calibration
+    {
+        struct RadarCalibParam
+        {
+            double start_sec = 20;
+            double max_sec = 500;
 
-struct RadarCalibParam {
-    double start_sec = 20;
-    double max_sec = 500;
+            double initial_yaw = 0; // in rad
 
-    double initial_yaw = 0; // in rad
-    
-    double min_velocity = 5;  // 3m/s
-    double max_velocity = 25;  // 25m/s
-    // ve_diff_range_ = 1 - cos(v_diff_angle_deg)
-    // 0.015 = 1 - cos(10 degree)
-    double v_diff_angle_deg = 3;
+            double min_velocity = 5;  // 3m/s
+            double max_velocity = 25; // 25m/s
+            // ve_diff_range_ = 1 - cos(v_diff_angle_deg)
+            // 0.015 = 1 - cos(10 degree)
+            double v_diff_angle_deg = 3;
 
-    bool applyVegoScale = true; 
-};
+            bool applyVegoScale = true;
+        };
 
-class RadarCalibrator {
-public:
-    RadarCalibrator() {
-    }
-    
-    double calib(const std::string &radar_file_dir,
-               const std::string &radar_type, // delphi or conti 
-               const std::string &novatel_enu,
-               const RadarCalibParam &param,
-               bool guessRoughYaw = true,
-               bool savefig = true);
+        class RadarCalibrator
+        {
+        public:
+            RadarCalibrator() {}
 
-    // verification
+            double calib(const std::string &radar_file_dir,
+                         const std::string &radar_type, // delphi or conti
+                         const std::string &novatel_enu,
+                         const RadarCalibParam &param,
+                         bool guessRoughYaw = true,
+                         bool savefig = true);
 
-private:
-    bool whetherStatic(const RadarObject &object);
+            // verification
 
-    bool getSingleYaw(const RadarObject &object, int i0, int i1,
-                      double &yaw_deg, double &confidence);
-    
-    double angle_thresh_;
-    int min_gap_;
-    double min_velocity_;
-    double max_velocity_;
-    int used_frm_;
+        private:
+            bool whetherStatic(const RadarObject &object);
 
-private:
-    double yaw_deg;
-    Eigen::Matrix3d radar2carcenter_;
-    // verification
-    double offset_var;
-    double max_offset_diff;
-};
+            bool getSingleYaw(const RadarObject &object, int i0, int i1, double &yaw_deg, double &confidence);
 
-} // namespace calibration
+            double angle_thresh_;
+            int min_gap_;
+            double min_velocity_;
+            double max_velocity_;
+            int used_frm_;
+
+        private:
+            double yaw_deg;
+            Eigen::Matrix3d radar2carcenter_;
+            // verification
+            double offset_var;
+            double max_offset_diff;
+        };
+    } // namespace calibration
 } // namespace autoCalib
-
 
 #endif /*CALIB_RADAR2CARCENTER_RADAR2CAR_HPP_*/
