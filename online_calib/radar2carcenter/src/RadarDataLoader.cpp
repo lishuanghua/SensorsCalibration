@@ -357,6 +357,5 @@ namespace autoCalib
 
             return true;
         }
-
     } // namespace calibration
 } // namespace autoCalib

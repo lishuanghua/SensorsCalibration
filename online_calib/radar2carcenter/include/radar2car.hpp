@@ -125,7 +125,6 @@ namespace autoCalib
             double offset_var;
             double max_offset_diff;
         };
-
     } // namespace calibration
 } // namespace autoCalib
 
