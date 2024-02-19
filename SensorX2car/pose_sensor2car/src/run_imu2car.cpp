@@ -21,20 +21,22 @@ const char usage[] = {
 
 int main(int argc, char **argv)
 {
-    
     if (argc != 3 && argc != 4 && argc != 5)
     {
         std::cerr << "Usage:" << usage;
+
         return 1;
     }
     std::string file_path = argv[1];
     std::string output_dir = argv[2];
     int start_frame = 0;
     int end_frame = INT_MAX;
+
     if (argc == 4)
     {
         start_frame = atoi(argv[3]);
     }
+
     if (argc == 5)
     {
         start_frame = atoi(argv[3]);
@@ -50,7 +52,8 @@ int main(int argc, char **argv)
         yaw = calibrator.GetFinalYaw();
         std::cout << "yaw = " << rad2deg(yaw) << " degree" << std::endl;
     }
-    else{
+    else
+    {
         std::cout << "No valid data for calibrating yaw." << std::endl;
         exit(1);
     }
