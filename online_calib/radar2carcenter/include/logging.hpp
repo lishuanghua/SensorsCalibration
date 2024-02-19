@@ -29,4 +29,4 @@
 #define LOGDEBUG(...) ((void)0)
 #endif
 
-#endif  //  RADAR2CARCENTER_LOGGING_HPP_
+#endif //  RADAR2CARCENTER_LOGGING_HPP_
