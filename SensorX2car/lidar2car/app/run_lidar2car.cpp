@@ -24,7 +24,7 @@ const char usage[] = {
 void SaveExtrinsic(Eigen::Matrix4d T, std::string output_dir)
 {
     std::string file_name = output_dir + '/' + "calib_result.txt";
-    
+
     std::ofstream ofs(file_name);
     if (!ofs.is_open())
     {
@@ -43,10 +43,10 @@ void SaveExtrinsic(Eigen::Matrix4d T, std::string output_dir)
 
 int main(int argc, char **argv)
 {
-    
     if (argc != 3 && argc != 5)
     {
         std::cerr << "Usage:" << usage;
+
         return 1;
     }
     std::string dataset_folder = argv[1];
@@ -73,15 +73,14 @@ int main(int argc, char **argv)
         roll = Util::GetRoll(extrinsic);
         pitch = Util::GetPitch(extrinsic);
         std::cout << "Final result:" << std::endl
-                    << "roll = " << rad2deg(roll) << " degree" << std::endl
-                    << "pitch = " << rad2deg(pitch) << " degree" << std::endl
-                    << "z = " << extrinsic(2, 3) << " m" << std::endl;
+                  << "roll = " << rad2deg(roll) << " degree" << std::endl
+                  << "pitch = " << rad2deg(pitch) << " degree" << std::endl
+                  << "z = " << extrinsic(2, 3) << " m" << std::endl;
     }
     else
     {
         std::cout << "No valid data for calibrating pitch and roll." << std::endl;
     }
-
 
     YawCalib calibrator2(output_dir);
     calibrator2.LoadData(lidar_pose);
@@ -90,19 +89,18 @@ int main(int argc, char **argv)
     if (calibrator2.Calibrate())
     {
         yaw = calibrator2.GetFinalYaw();
-        std::cout << "Final result:" << std::endl 
+        std::cout << "Final result:" << std::endl
                   << "yaw = " << rad2deg(yaw) << " degree" << std::endl;
     }
-    else{
+    else
+    {
         std::cout << "No valid data for calibrating yaw." << std::endl;
     }
-            
+
     Eigen::Matrix3d rotation;
     rotation = Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ()) *
-            Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
-            Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX());
+               Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
+               Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX());
     extrinsic.block<3, 3>(0, 0) = rotation;
     SaveExtrinsic(extrinsic, output_dir);
 }
-
-
